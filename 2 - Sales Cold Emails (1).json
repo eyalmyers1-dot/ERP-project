@@ -1,0 +1,311 @@
+{
+  "name": "2 - Sales Cold Emails",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "id": "328bfc07-0563-4872-9f27-c255689e5517",
+      "name": "Every 3 Hours",
+      "position": [
+        -1280,
+        32
+      ],
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appxsZIq0qv9Buy9d",
+          "mode": "list",
+          "cachedResultName": "ERP-AI",
+          "cachedResultUrl": "https://airtable.com/appxsZIq0qv9Buy9d"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxwV7kZv7UF5wt2",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appxsZIq0qv9Buy9d/tblxwV7kZv7UF5wt2"
+        },
+        "filterByFormula": "Status='New'",
+        "returnAll": false,
+        "limit": 10,
+        "options": {}
+      },
+      "id": "86aa0030-5885-407f-89ba-77243f3efdfc",
+      "name": "Search New Leads",
+      "position": [
+        -976,
+        32
+      ],
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "retryOnFail": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "boaHIpSj43LBaGp0",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'Write a short, friendly cold sales email in Hebrew to a business lead named ' + $json.Name + ' (company: ' + ($json.Company || 'לא ידוע') + ') who is interested in: ' + ($json.Interest || 'מוצרי אלקטרוניקה') + '. We are AI Electronics, an Israeli electronics retailer. One clear call to action. Max 120 words. Return only the email body.' }}"
+      },
+      "id": "b8692829-03c9-4a55-852f-bb2499b26dc8",
+      "name": "Write Cold Email",
+      "position": [
+        -672,
+        16
+      ],
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Search New Leads').item.json.email }}",
+        "subject": "הצעה מיוחדת מ-AI Electronics",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "id": "d9896b4e-0914-42ce-9dd5-f4b57fca270a",
+      "name": "Send Email",
+      "position": [
+        -304,
+        16
+      ],
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "webhookId": "b0033b40-e2c4-42ea-9d68-09eee650e7a3",
+      "retryOnFail": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vhvfHH1G1P4NkxvY",
+          "name": "Gmail OAuth2 API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appxsZIq0qv9Buy9d",
+          "mode": "list",
+          "cachedResultName": "ERP-AI",
+          "cachedResultUrl": "https://airtable.com/appxsZIq0qv9Buy9d"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxwV7kZv7UF5wt2",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appxsZIq0qv9Buy9d/tblxwV7kZv7UF5wt2"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Search New Leads').item.json.id }}",
+            "Status": "Contacted",
+            "Name": "={{ $('Search New Leads').item.json.Name }}",
+            "email": "={{ $('Search New Leads').item.json.email }}",
+            "Company": "={{ $('Search New Leads').item.json.Company }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created",
+              "displayName": "Created",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "58f3a828-d531-4fd4-82f6-24e78cf673eb",
+      "name": "Mark Contacted",
+      "position": [
+        0,
+        0
+      ],
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "boaHIpSj43LBaGp0",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-5.4-mini",
+        "options": {}
+      },
+      "id": "654d34be-3dba-40c3-af3f-9579f3559ecc",
+      "name": "Chat Model",
+      "position": [
+        -816,
+        240
+      ],
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "credentials": {
+        "openAiApi": {
+          "id": "z7NsVMXkmps9SYj5",
+          "name": "OpenAI account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 3 Hours": {
+      "main": [
+        [
+          {
+            "node": "Search New Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search New Leads": {
+      "main": [
+        [
+          {
+            "node": "Write Cold Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Mark Contacted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Cold Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write Cold Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "606749e5-af5e-41f9-9676-c5bf172109d5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ea00fc8d8c2e6994c3b0720a61e22510d5ec3256484bf7154ba484aec8890b86"
+  },
+  "nodeGroups": [],
+  "id": "rcWbQNcu2i0GZZr7",
+  "tags": []
+}
