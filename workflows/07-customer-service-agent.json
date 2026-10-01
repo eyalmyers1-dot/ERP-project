@@ -1,26 +1,334 @@
 {
-  "name": "7 - סוכן שירות לקוחות (טלגרם)",
-  "settings": {"executionOrder": "v1"},
-  "nodes": [
-    {"id": "14eb65b4-3045-49a3-81a5-c157cbaef01f", "name": "Sticky Note", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [-384, 480], "parameters": {"content": "## 7 · סוכן שירות לקוחות (WF5 במפרט)\n**מה:** לקוח כותב לבוט טלגרם #2 → הסוכן שולף מה-RAG (מדיניות + קטלוג) ועונה בעברית. לא ממציא.\n**צריך:** credential טלגרם של בוט הלקוחות (erp_finalproject_sales_JB_bot), OpenAI.\n**מאגר וקטורי:** Simple Vector Store בזיכרון n8n — memory keys `mypolicies` ו-`theproducts`, בדיוק כמו ב-workflows 3 ו-4.\n**לפני שימוש:** הרץ את 3 ו-4 (טופס העלאה) כדי למלא את המאגר. אחרי כל הפעלה מחדש של n8n — להריץ שוב.", "color": 4}},
-    {"id": "8cae211c-4211-485b-8321-87475bcf3af7", "name": "הודעה מלקוח (בוט #2)", "type": "n8n-nodes-base.telegramTrigger", "typeVersion": 1.5, "position": [0, 208], "parameters": {"updates": ["message"], "additionalFields": {}}, "credentials": {"telegramApi": {"id": "xoiaWooSlawB4FeI", "name": "Telegram account"}}},
-    {"id": "624df6e2-42c5-4798-acc9-130d5e09bd73", "name": "סוכן שירות לקוחות", "type": "@n8n/n8n-nodes-langchain.agent", "typeVersion": 3.1, "position": [352, 208], "parameters": {"promptType": "define", "text": "={{ $json.message.text }}", "options": {"systemMessage": "אתה נציג שירות הלקוחות של \"אלקטרו-פלוס בע\"מ\", חנות אלקטרוניקה ישראלית. ענה בעברית, בנימוס ובקצרה.\n\nכללים:\n1. לפני כל תשובה על כללי העסק (החזרות, אחריות, משלוחים, תשלומים, שעות פעילות) חובה לקרוא לכלי \"business_policy מדיניות העסק\" ולענות רק לפי מה שחזר ממנו.\n2. לפני כל תשובה על מוצר, מחיר, מפרט או מלאי חובה לקרוא לכלי \"product_catalog קטלוג המוצרים\" ולענות רק לפי מה שחזר ממנו.\n3. אם המידע לא נמצא בכלים — אמור שאינך יודע והפנה לשירות הלקוחות האנושי. אל תמציא מחירים, מדיניות או מוצרים.\n4. אל תבצע פעולות (הזמנה, החזר, שינוי) — רק מידע. הזמנות מתבצעות באתר.\n5. מחירים בשקלים (₪), כולל מע\"מ.\n6. שמור על טון חם ומקצועי, ללא אימוג'י מיותרים.", "maxIterations": 6}}},
-    {"id": "03133ec6-b811-4bbf-880f-8e26a5cf8169", "name": "OpenAI Chat Model", "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi", "typeVersion": 1.3, "position": [80, 432], "parameters": {"model": {"__rl": true, "mode": "list", "value": "gpt-5-mini"}, "options": {}}, "credentials": {"openAiApi": {"id": "z7NsVMXkmps9SYj5", "name": "OpenAI account 2"}}},
-    {"id": "fb43bed8-4450-4465-8f34-6c3518f119e6", "name": "זיכרון שיחה", "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow", "typeVersion": 1.4, "position": [240, 448], "parameters": {"sessionIdType": "customKey", "sessionKey": "={{ $('הודעה מלקוח (בוט #2)').first().json.message.chat.id }}", "contextWindowLength": 8}},
-    {"id": "d6d7078f-c247-48ac-9dbb-5f77778c294f", "name": "business_policy מדיניות העסק", "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory", "typeVersion": 1.3, "position": [432, 432], "parameters": {"mode": "retrieve-as-tool", "toolDescription": "חיפוש במסמך מדיניות העסק: שעות פעילות, משלוחים, החזרות והחלפות, אחריות, תשלומים, מסמכי מס וסטטוסים של הזמנה. השתמש בכלי הזה לכל שאלה על כללי העסק.", "memoryKey": {"__rl": true, "mode": "list", "value": "mypolicies"}}},
-    {"id": "6ad1a3b6-a3f5-41e8-820e-b8d2132bcbae", "name": "Embeddings - מדיניות", "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi", "typeVersion": 1.2, "position": [368, 640], "parameters": {"options": {}}, "credentials": {"openAiApi": {"id": "z7NsVMXkmps9SYj5", "name": "OpenAI account 2"}}},
-    {"id": "65b6a993-929b-4889-a0ec-1668694eb446", "name": "product_catalog קטלוג המוצרים", "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory", "typeVersion": 1.3, "position": [784, 432], "parameters": {"mode": "retrieve-as-tool", "toolDescription": "חיפוש בקטלוג המוצרים של אלקטרו-פלוס: שמות, מק\"ט, קטגוריות, מחירים, מפרט, אחריות וזמינות במלאי. השתמש בכלי הזה לכל שאלה על מוצר, מחיר או מלאי.", "memoryKey": {"__rl": true, "mode": "list", "value": "theproducts"}, "topK": 5}},
-    {"id": "22296b1c-c3f9-4ba2-8820-6e69a3264ace", "name": "Embeddings - מוצרים", "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi", "typeVersion": 1.2, "position": [688, 656], "parameters": {"options": {}}, "credentials": {"openAiApi": {"id": "z7NsVMXkmps9SYj5", "name": "OpenAI account 2"}}},
-    {"id": "e4f1dddb-4b46-499e-aaa9-fc8a87b24b47", "name": "תשובה ללקוח", "type": "n8n-nodes-base.telegram", "typeVersion": 1.2, "position": [816, 208], "parameters": {"chatId": "={{ $('הודעה מלקוח (בוט #2)').first().json.message.chat.id }}", "text": "={{ $json.output }}", "additionalFields": {"appendAttribution": false, "parse_mode": "HTML"}}, "credentials": {"telegramApi": {"id": "xoiaWooSlawB4FeI", "name": "Telegram account"}}}
-  ],
-  "connections": {
-    "הודעה מלקוח (בוט #2)": {"main": [[{"node": "סוכן שירות לקוחות", "type": "main", "index": 0}]]},
-    "סוכן שירות לקוחות": {"main": [[{"node": "תשובה ללקוח", "type": "main", "index": 0}]]},
-    "OpenAI Chat Model": {"ai_languageModel": [[{"node": "סוכן שירות לקוחות", "type": "ai_languageModel", "index": 0}]]},
-    "זיכרון שיחה": {"ai_memory": [[{"node": "סוכן שירות לקוחות", "type": "ai_memory", "index": 0}]]},
-    "business_policy מדיניות העסק": {"ai_tool": [[{"node": "סוכן שירות לקוחות", "type": "ai_tool", "index": 0}]]},
-    "Embeddings - מדיניות": {"ai_embedding": [[{"node": "business_policy מדיניות העסק", "type": "ai_embedding", "index": 0}]]},
-    "product_catalog קטלוג המוצרים": {"ai_tool": [[{"node": "סוכן שירות לקוחות", "type": "ai_tool", "index": 0}]]},
-    "Embeddings - מוצרים": {"ai_embedding": [[{"node": "product_catalog קטלוג המוצרים", "type": "ai_embedding", "index": 0}]]}
+ "name": "7 - סוכן שירות לקוחות (טלגרם)",
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "nodes": [
+  {
+   "id": "14eb65b4-3045-49a3-81a5-c157cbaef01f",
+   "name": "Sticky Note",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    -384,
+    480
+   ],
+   "parameters": {
+    "content": "## 7 · סוכן שירות לקוחות (WF5 במפרט)\n**מה:** לקוח כותב לבוט טלגרם #2 → הסוכן שולף מה-RAG (מדיניות + קטלוג) ועונה בעברית. לא ממציא.\n**צריך:** credential טלגרם של בוט הלקוחות (erp_finalproject_sales_JB_bot), OpenAI.\n**מאגר וקטורי:** Simple Vector Store בזיכרון n8n — memory keys `mypolicies` ו-`theproducts`, בדיוק כמו ב-workflows 3 ו-4.\n**גיבוי:** כלי products_table קורא ישירות מטבלת Products ב-Airtable, כך שהבוט עונה על מוצרים גם אם המאגר הווקטורי ריק.\n**לפני שימוש:** הרץ את 3 ו-4 (טופס העלאה) כדי למלא את המאגר. אחרי כל הפעלה מחדש של n8n — להריץ שוב.",
+    "color": 4
+   }
+  },
+  {
+   "id": "8cae211c-4211-485b-8321-87475bcf3af7",
+   "name": "הודעה מלקוח (בוט #2)",
+   "type": "n8n-nodes-base.telegramTrigger",
+   "typeVersion": 1.5,
+   "position": [
+    0,
+    208
+   ],
+   "parameters": {
+    "updates": [
+     "message"
+    ],
+    "additionalFields": {}
+   },
+   "credentials": {
+    "telegramApi": {
+     "name": "Telegram account (בוט הלקוחות)"
+    }
+   }
+  },
+  {
+   "id": "624df6e2-42c5-4798-acc9-130d5e09bd73",
+   "name": "סוכן שירות לקוחות",
+   "type": "@n8n/n8n-nodes-langchain.agent",
+   "typeVersion": 3.1,
+   "position": [
+    352,
+    208
+   ],
+   "parameters": {
+    "promptType": "define",
+    "text": "={{ $json.message.text }}",
+    "options": {
+     "systemMessage": "אתה נציג שירות הלקוחות של \"אלקטרו-פלוס בע\"מ\", חנות אלקטרוניקה ישראלית. ענה בעברית, בנימוס ובקצרה.\n\nכללים:\n1. לפני כל תשובה על כללי העסק (החזרות, אחריות, משלוחים, תשלומים, שעות פעילות) חובה לקרוא לכלי \"business_policy מדיניות העסק\" ולענות רק לפי מה שחזר ממנו.\n2. לפני כל תשובה על מוצר, מחיר, מפרט או מלאי חובה לקרוא לכלי \"product_catalog קטלוג המוצרים\". אם הוא לא החזיר תוצאות, או כשהלקוח מבקש רשימת מוצרים כללית — קרא לכלי \"products_table טבלת המוצרים\" (המלאי החי של החנות). ענה רק לפי מה שחזר מהכלים.\n3. אם המידע לא נמצא בכלים — אמור שאינך יודע והפנה לשירות הלקוחות האנושי. אל תמציא מחירים, מדיניות או מוצרים.\n4. אל תבצע פעולות (הזמנה, החזר, שינוי) — רק מידע. הזמנות מתבצעות באתר.\n5. מחירים בשקלים (₪), כולל מע\"מ. רשימות מוצרים — עד 10 פריטים, והצע לצמצם לפי קטגוריה.\n6. שמור על טון חם ומקצועי, ללא אימוג'י מיותרים.",
+     "maxIterations": 6
+    }
+   }
+  },
+  {
+   "id": "03133ec6-b811-4bbf-880f-8e26a5cf8169",
+   "name": "OpenAI Chat Model",
+   "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+   "typeVersion": 1.3,
+   "position": [
+    80,
+    432
+   ],
+   "parameters": {
+    "model": {
+     "__rl": true,
+     "mode": "list",
+     "value": "gpt-5-mini"
+    },
+    "options": {}
+   },
+   "credentials": {
+    "openAiApi": {
+     "id": "z7NsVMXkmps9SYj5",
+     "name": "OpenAI account 2"
+    }
+   }
+  },
+  {
+   "id": "fb43bed8-4450-4465-8f34-6c3518f119e6",
+   "name": "זיכרון שיחה",
+   "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+   "typeVersion": 1.4,
+   "position": [
+    240,
+    448
+   ],
+   "parameters": {
+    "sessionIdType": "customKey",
+    "sessionKey": "={{ $('הודעה מלקוח (בוט #2)').first().json.message.chat.id }}",
+    "contextWindowLength": 8
+   }
+  },
+  {
+   "id": "d6d7078f-c247-48ac-9dbb-5f77778c294f",
+   "name": "business_policy מדיניות העסק",
+   "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+   "typeVersion": 1.3,
+   "position": [
+    432,
+    432
+   ],
+   "parameters": {
+    "mode": "retrieve-as-tool",
+    "toolDescription": "חיפוש במסמך מדיניות העסק: שעות פעילות, משלוחים, החזרות והחלפות, אחריות, תשלומים, מסמכי מס וסטטוסים של הזמנה. השתמש בכלי הזה לכל שאלה על כללי העסק.",
+    "memoryKey": {
+     "__rl": true,
+     "mode": "list",
+     "value": "mypolicies"
+    }
+   }
+  },
+  {
+   "id": "6ad1a3b6-a3f5-41e8-820e-b8d2132bcbae",
+   "name": "Embeddings - מדיניות",
+   "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+   "typeVersion": 1.2,
+   "position": [
+    368,
+    640
+   ],
+   "parameters": {
+    "options": {}
+   },
+   "credentials": {
+    "openAiApi": {
+     "id": "z7NsVMXkmps9SYj5",
+     "name": "OpenAI account 2"
+    }
+   }
+  },
+  {
+   "id": "65b6a993-929b-4889-a0ec-1668694eb446",
+   "name": "product_catalog קטלוג המוצרים",
+   "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+   "typeVersion": 1.3,
+   "position": [
+    784,
+    432
+   ],
+   "parameters": {
+    "mode": "retrieve-as-tool",
+    "toolDescription": "חיפוש בקטלוג המוצרים של אלקטרו-פלוס: שמות, מק\"ט, קטגוריות, מחירים, מפרט, אחריות וזמינות במלאי. השתמש בכלי הזה לכל שאלה על מוצר, מחיר או מלאי.",
+    "memoryKey": {
+     "__rl": true,
+     "mode": "list",
+     "value": "theproducts"
+    },
+    "topK": 5
+   }
+  },
+  {
+   "id": "22296b1c-c3f9-4ba2-8820-6e69a3264ace",
+   "name": "Embeddings - מוצרים",
+   "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+   "typeVersion": 1.2,
+   "position": [
+    688,
+    656
+   ],
+   "parameters": {
+    "options": {}
+   },
+   "credentials": {
+    "openAiApi": {
+     "id": "z7NsVMXkmps9SYj5",
+     "name": "OpenAI account 2"
+    }
+   }
+  },
+  {
+   "id": "e4f1dddb-4b46-499e-aaa9-fc8a87b24b47",
+   "name": "תשובה ללקוח",
+   "type": "n8n-nodes-base.telegram",
+   "typeVersion": 1.2,
+   "position": [
+    816,
+    208
+   ],
+   "parameters": {
+    "chatId": "={{ $('הודעה מלקוח (בוט #2)').first().json.message.chat.id }}",
+    "text": "={{ $json.output }}",
+    "additionalFields": {
+     "appendAttribution": false,
+     "parse_mode": "HTML"
+    }
+   },
+   "credentials": {
+    "telegramApi": {
+     "name": "Telegram account (בוט הלקוחות)"
+    }
+   }
+  },
+  {
+   "id": "7e1c0d2a-aaaa-4bbb-8ccc-products0001",
+   "name": "products_table טבלת המוצרים",
+   "type": "n8n-nodes-base.airtableTool",
+   "typeVersion": 2.2,
+   "position": [
+    1040,
+    432
+   ],
+   "parameters": {
+    "descriptionType": "manual",
+    "toolDescription": "רשימת כל המוצרים החיים מטבלת Products ב-Airtable: שם, קטגוריה, מחיר בשקלים, תיאור וזמינות במלאי. השתמש כשהלקוח מבקש רשימת מוצרים, או כשחיפוש בקטלוג לא החזיר תוצאות.",
+    "resource": "record",
+    "operation": "search",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblABDbFCYw5lOj8b"
+    },
+    "returnAll": true,
+    "options": {}
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "name": "Airtable Personal Access Token"
+    }
+   }
   }
+ ],
+ "connections": {
+  "הודעה מלקוח (בוט #2)": {
+   "main": [
+    [
+     {
+      "node": "סוכן שירות לקוחות",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "סוכן שירות לקוחות": {
+   "main": [
+    [
+     {
+      "node": "תשובה ללקוח",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "OpenAI Chat Model": {
+   "ai_languageModel": [
+    [
+     {
+      "node": "סוכן שירות לקוחות",
+      "type": "ai_languageModel",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "זיכרון שיחה": {
+   "ai_memory": [
+    [
+     {
+      "node": "סוכן שירות לקוחות",
+      "type": "ai_memory",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "business_policy מדיניות העסק": {
+   "ai_tool": [
+    [
+     {
+      "node": "סוכן שירות לקוחות",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Embeddings - מדיניות": {
+   "ai_embedding": [
+    [
+     {
+      "node": "business_policy מדיניות העסק",
+      "type": "ai_embedding",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "product_catalog קטלוג המוצרים": {
+   "ai_tool": [
+    [
+     {
+      "node": "סוכן שירות לקוחות",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Embeddings - מוצרים": {
+   "ai_embedding": [
+    [
+     {
+      "node": "product_catalog קטלוג המוצרים",
+      "type": "ai_embedding",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "products_table טבלת המוצרים": {
+   "ai_tool": [
+    [
+     {
+      "node": "סוכן שירות לקוחות",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ }
 }

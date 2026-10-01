@@ -35,8 +35,7 @@
    },
    "credentials": {
     "telegramApi": {
-     "id": "xoiaWooSlawB4FeI",
-     "name": "Telegram account"
+     "name": "Telegram account 2 (בוט המנהל)"
     }
    }
   },
@@ -222,8 +221,7 @@
    },
    "credentials": {
     "telegramApi": {
-     "id": "xoiaWooSlawB4FeI",
-     "name": "Telegram account"
+     "name": "Telegram account 2 (בוט המנהל)"
     }
    }
   },
@@ -303,8 +301,7 @@
    },
    "credentials": {
     "telegramApi": {
-     "id": "xoiaWooSlawB4FeI",
-     "name": "Telegram account"
+     "name": "Telegram account 2 (בוט המנהל)"
     }
    }
   }

@@ -273,3 +273,57 @@ window.FALLBACK_PRODUCTS = [
   "inStock": true
  }
 ];
+
+// תמונות מוצר — תמונות אמיתיות (Flickr/Creative Commons דרך loremflickr). לפי מק"ט; ניתן להחליף בכל URL של תמונה.
+window.PRODUCT_IMAGES = {
+  'TY-HP-200': 'https://loremflickr.com/640/480/headphones,wireless?lock=11',
+  'TY-EB-300': 'https://loremflickr.com/640/480/earbuds?lock=12',
+  'TY-GH-700': 'https://loremflickr.com/640/480/gaming,headset?lock=13',
+  'TY-SP-100': 'https://loremflickr.com/640/480/bluetooth,speaker?lock=14',
+  'TY-SB-210': 'https://loremflickr.com/640/480/soundbar?lock=15',
+  'TY-MN-27Q': 'https://loremflickr.com/640/480/computer,monitor?lock=16',
+  'TY-MN-24F': 'https://loremflickr.com/640/480/monitor,desk?lock=17',
+  'TY-MN-34U': 'https://loremflickr.com/640/480/ultrawide,monitor?lock=18',
+  'TY-KB-MX': 'https://loremflickr.com/640/480/mechanical,keyboard?lock=19',
+  'TY-KB-S2': 'https://loremflickr.com/640/480/wireless,keyboard?lock=20',
+  'TY-MS-05': 'https://loremflickr.com/640/480/computer,mouse?lock=21',
+  'TY-MS-PRO': 'https://loremflickr.com/640/480/gaming,mouse?lock=22',
+  'TY-CM-1080': 'https://loremflickr.com/640/480/webcam?lock=23',
+  'TY-CM-4K': 'https://loremflickr.com/640/480/webcam,camera?lock=24',
+  'TY-MIC-1': 'https://loremflickr.com/640/480/usb,microphone?lock=25',
+  'TY-DK-11': 'https://loremflickr.com/640/480/docking,station?lock=26',
+  'TY-CB-HD21': 'https://loremflickr.com/640/480/hdmi,cable?lock=27',
+  'TY-CB-UC100': 'https://loremflickr.com/640/480/usb,cable?lock=28',
+  'TY-CH-65': 'https://loremflickr.com/640/480/charger,usb?lock=29',
+  'TY-PB-20': 'https://loremflickr.com/640/480/powerbank?lock=30',
+  'TY-SD-1TB': 'https://loremflickr.com/640/480/ssd,drive?lock=31',
+  'TY-WF-6': 'https://loremflickr.com/640/480/wifi,router?lock=32',
+  'TY-SRV-01': 'https://loremflickr.com/640/480/home,office,desk?lock=33',
+  'TY-SRV-02': 'https://loremflickr.com/640/480/pc,build?lock=34',
+  'TY-SRV-03': 'https://loremflickr.com/640/480/computer,repair?lock=35',
+  'TY-SRV-04': 'https://loremflickr.com/640/480/laptop,repair?lock=36',
+  'TY-SRV-05': 'https://loremflickr.com/640/480/ssd,upgrade?lock=37',
+  'TY-SRV-06': 'https://loremflickr.com/640/480/backup,harddrive?lock=38',
+  'TY-SRV-07': 'https://loremflickr.com/640/480/remote,support?lock=39',
+  'TY-SRV-08': 'https://loremflickr.com/640/480/it,support?lock=40',
+  'TY-SRV-09': 'https://loremflickr.com/640/480/security,camera?lock=41',
+  'TY-SRV-10': 'https://loremflickr.com/640/480/computer,training?lock=42',
+  'TY-SRV-11': 'https://loremflickr.com/640/480/warranty,laptop?lock=43',
+  'TY-SRV-12': 'https://loremflickr.com/640/480/courier,delivery?lock=44'
+};
+// גיבוי לפי קטגוריה — למוצרים חדשים שנוספים ב-Airtable בלי מק"ט מוכר
+window.CATEGORY_IMAGES = {
+  'אוזניות': 'https://loremflickr.com/640/480/headphones?lock=9',
+  'רמקולים': 'https://loremflickr.com/640/480/speaker?lock=9',
+  'מסכים': 'https://loremflickr.com/640/480/monitor?lock=9',
+  'מקלדות': 'https://loremflickr.com/640/480/keyboard?lock=9',
+  'עכברים': 'https://loremflickr.com/640/480/mouse,computer?lock=9',
+  'מצלמות רשת': 'https://loremflickr.com/640/480/webcam?lock=9',
+  'מיקרופונים': 'https://loremflickr.com/640/480/microphone?lock=9',
+  'עגינה': 'https://loremflickr.com/640/480/docking,station?lock=9',
+  'כבלים': 'https://loremflickr.com/640/480/cable,usb?lock=9',
+  'מטענים': 'https://loremflickr.com/640/480/charger?lock=9',
+  'אחסון': 'https://loremflickr.com/640/480/ssd?lock=9',
+  'רשת': 'https://loremflickr.com/640/480/router?lock=9',
+  'שירותים': 'https://loremflickr.com/640/480/computer,technician?lock=9'
+};
