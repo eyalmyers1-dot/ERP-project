@@ -1,0 +1,321 @@
+{
+ "name": "8 - הפקת מסמך חשבונית לדרייב",
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "nodes": [
+  {
+   "id": "s8",
+   "name": "Sticky Note",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    160,
+    -220
+   ],
+   "parameters": {
+    "content": "## 8 · הפקת מסמך חשבונית → Google Drive (WF8 במפרט)\n**מה:** כל דקה מושך חשבוניות בסטטוס \"ממתין להפקה\" בלי PdfUrl, ממלא תבנית HTML בעברית (RTL), מעלה לדרייב, משתף לצפייה, וכותב את הקישור ב-PdfUrl + סטטוס \"הופק\".\n**צריך:** credentials של Google Drive ו-Airtable.\n**תבנית החשבונית:** בצומת \"בניית HTML\" — ערוך שם את פרטי העסק (ח.פ., כתובת).\n**PDF:** לפי המפרט אין המרה אוטומטית — פותחים בדרייב ומורידים כ-PDF.",
+    "color": 4
+   }
+  },
+  {
+   "id": "t8",
+   "name": "כל דקה",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.4,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "minutes",
+       "minutesInterval": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "q8",
+   "name": "חשבוניות ממתינות להפקה",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    224,
+    0
+   ],
+   "parameters": {
+    "operation": "search",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblUyOaKSKEgea5wn"
+    },
+    "filterByFormula": "AND({Status} = \"ממתין להפקה\", {PdfUrl} = \"\")",
+    "returnAll": false,
+    "limit": 5,
+    "options": {}
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "שיטוח שדות",
+   "name": "שיטוח שדות",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    448,
+    0
+   ],
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={{ JSON.stringify({ id: $json.id, createdTime: $json.createdTime, ...($json.fields || {}) }) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "h8",
+   "name": "בניית HTML",
+   "type": "n8n-nodes-base.html",
+   "typeVersion": 1.2,
+   "position": [
+    672,
+    0
+   ],
+   "parameters": {
+    "html": "<!DOCTYPE html>\n<html lang=\"he\" dir=\"rtl\">\n<head>\n<meta charset=\"utf-8\">\n<title>חשבונית {{ $json.InvoiceNumber }}</title>\n<style>\n  body { font-family: Arial, \"Segoe UI\", sans-serif; color: #1d1f20; background: #fff; margin: 0; padding: 40px; direction: rtl; }\n  .sheet { max-width: 760px; margin: 0 auto; border: 1px solid #5980a6; padding: 32px; }\n  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #5980a6; padding-bottom: 16px; }\n  .brand { font-size: 26px; font-weight: 700; color: #5980a6; }\n  .brand small { display: block; font-size: 12px; color: #555; font-weight: 400; margin-top: 4px; }\n  .doc { text-align: left; }\n  .doc h1 { margin: 0; font-size: 22px; }\n  .doc div { font-size: 13px; color: #555; }\n  .meta { display: flex; gap: 40px; margin: 24px 0; font-size: 14px; }\n  .meta b { display: block; color: #555; font-weight: 400; font-size: 12px; }\n  table { width: 100%; border-collapse: collapse; margin-top: 8px; }\n  th, td { padding: 10px 12px; border-bottom: 1px solid #ddd; text-align: right; font-size: 14px; }\n  th { background: #f2f2f3; color: #333; }\n  td.num, th.num { text-align: left; font-variant-numeric: tabular-nums; }\n  .totals { margin-top: 16px; margin-inline-start: auto; width: 320px; }\n  .totals td { border: none; padding: 6px 12px; }\n  .totals tr.grand td { border-top: 2px solid #5980a6; font-size: 18px; font-weight: 700; }\n  .foot { margin-top: 32px; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 12px; }\n</style>\n</head>\n<body>\n<div class=\"sheet\">\n  <div class=\"head\">\n    <div class=\"brand\">אלקטרו-פלוס בע\"מ<small>ח.פ. 51-000000-0 · רח' הטכנולוגיה 1, תל אביב · 03-0000000</small></div>\n    <div class=\"doc\"><h1>חשבונית מס</h1><div>מספר {{ $json.InvoiceNumber }}</div><div>מקור</div></div>\n  </div>\n  <div class=\"meta\">\n    <div><b>לכבוד</b>לקוח מס' {{ $json.CustomerId }}</div>\n    <div><b>תאריך הפקה</b>{{ $now.setZone(\"Asia/Jerusalem\").toFormat(\"dd/MM/yyyy\") }}</div>\n    <div><b>תאריך יצירה</b>{{ DateTime.fromISO($json.Created).setZone(\"Asia/Jerusalem\").toFormat(\"dd/MM/yyyy\") }}</div>\n  </div>\n  <table>\n    <thead><tr><th>#</th><th>פירוט</th><th class=\"num\">סכום לפני מע\"מ</th></tr></thead>\n    <tbody><tr><td>1</td><td>מוצרים ושירותים — לפי הזמנה</td><td class=\"num\">{{ Number($json.Amount).toLocaleString(\"he-IL\", { minimumFractionDigits: 2 }) }} ₪</td></tr></tbody>\n  </table>\n  <table class=\"totals\">\n    <tr><td>סה\"כ לפני מע\"מ</td><td class=\"num\">{{ Number($json.Amount).toLocaleString(\"he-IL\", { minimumFractionDigits: 2 }) }} ₪</td></tr>\n    <tr><td>מע\"מ 18%</td><td class=\"num\">{{ Number($json.VatAmount).toLocaleString(\"he-IL\", { minimumFractionDigits: 2 }) }} ₪</td></tr>\n    <tr class=\"grand\"><td>סה\"כ לתשלום</td><td class=\"num\">{{ Number($json.Total).toLocaleString(\"he-IL\", { minimumFractionDigits: 2 }) }} ₪</td></tr>\n  </table>\n  <div class=\"foot\">מסמך זה הופק אוטומטית על ידי מערכת ERP-AI. תנאי תשלום: שוטף + 30. תודה שקניתם באלקטרו-פלוס.</div>\n</div>\n</body>\n</html>"
+   }
+  },
+  {
+   "id": "u8",
+   "name": "העלאה לדרייב",
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    896,
+    0
+   ],
+   "parameters": {
+    "operation": "createFromText",
+    "content": "={{ $json.html }}",
+    "name": "=חשבונית-{{ $('שיטוח שדות').item.json.InvoiceNumber }}.html",
+    "driveId": {
+     "__rl": true,
+     "mode": "list",
+     "value": "My Drive"
+    },
+    "folderId": {
+     "__rl": true,
+     "mode": "list",
+     "value": "root",
+     "cachedResultName": "/ (Root folder)"
+    },
+    "options": {}
+   },
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "zokfvjQDWfQNJt7t",
+     "name": "Google Drive OAuth2 API"
+    }
+   }
+  },
+  {
+   "id": "sh8",
+   "name": "שיתוף קישור לצפייה",
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    1120,
+    0
+   ],
+   "parameters": {
+    "operation": "share",
+    "fileId": {
+     "__rl": true,
+     "mode": "id",
+     "value": "={{ $json.id }}"
+    },
+    "permissionsUi": {
+     "permissionsValues": {
+      "role": "reader",
+      "type": "anyone"
+     }
+    },
+    "options": {}
+   },
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "zokfvjQDWfQNJt7t",
+     "name": "Google Drive OAuth2 API"
+    }
+   }
+  },
+  {
+   "id": "k8",
+   "name": "קישור וסטטוס",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    1344,
+    0
+   ],
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "rec",
+       "name": "id",
+       "value": "={{ $('שיטוח שדות').item.json.id }}",
+       "type": "string"
+      },
+      {
+       "id": "url",
+       "name": "PdfUrl",
+       "value": "=https://drive.google.com/file/d/{{ $('העלאה לדרייב').item.json.id }}/view",
+       "type": "string"
+      },
+      {
+       "id": "st",
+       "name": "Status",
+       "value": "הופק",
+       "type": "string"
+      }
+     ]
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "w8",
+   "name": "עדכון החשבונית",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    1568,
+    0
+   ],
+   "parameters": {
+    "operation": "update",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblUyOaKSKEgea5wn"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [
+      "id"
+     ],
+     "schema": []
+    },
+    "options": {
+     "typecast": true
+    }
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  }
+ ],
+ "connections": {
+  "כל דקה": {
+   "main": [
+    [
+     {
+      "node": "חשבוניות ממתינות להפקה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "חשבוניות ממתינות להפקה": {
+   "main": [
+    [
+     {
+      "node": "שיטוח שדות",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "שיטוח שדות": {
+   "main": [
+    [
+     {
+      "node": "בניית HTML",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "בניית HTML": {
+   "main": [
+    [
+     {
+      "node": "העלאה לדרייב",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "העלאה לדרייב": {
+   "main": [
+    [
+     {
+      "node": "שיתוף קישור לצפייה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "שיתוף קישור לצפייה": {
+   "main": [
+    [
+     {
+      "node": "קישור וסטטוס",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "קישור וסטטוס": {
+   "main": [
+    [
+     {
+      "node": "עדכון החשבונית",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ }
+}

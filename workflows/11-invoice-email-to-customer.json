@@ -1,0 +1,312 @@
+{
+ "name": "11 - שליחת חשבונית ללקוח במייל",
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "nodes": [
+  {
+   "id": "s11",
+   "name": "Sticky Note",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    160,
+    -220
+   ],
+   "parameters": {
+    "content": "## 11 · חשבונית מוכנה → מייל ללקוח\n**מה:** כל דקה מושך חשבוניות בסטטוס \"הופק\" עם PdfUrl, מאתר את הלקוח ב-Leads לפי CustomerId (Autonumber), שולח מייל HTML בעברית עם קישור לחשבונית, ומסמן \"נשלחה ללקוח\".\n**צריך:** Gmail, Airtable.\n**סדר הסטטוסים:** ממתין לאימות (10) → ממתין להפקה (5) → הופק (8) → נשלחה ללקוח (11) → שולמה (ידני באפליקציה).",
+    "color": 4
+   }
+  },
+  {
+   "id": "t11",
+   "name": "כל דקה",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.4,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "minutes",
+       "minutesInterval": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "q11",
+   "name": "חשבוניות שהופקו וטרם נשלחו",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    224,
+    0
+   ],
+   "parameters": {
+    "operation": "search",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblUyOaKSKEgea5wn"
+    },
+    "filterByFormula": "AND({Status} = \"הופק\", {PdfUrl} != \"\", {CustomerId} > 0)",
+    "returnAll": false,
+    "limit": 5,
+    "options": {}
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "שיטוח חשבונית",
+   "name": "שיטוח חשבונית",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    448,
+    0
+   ],
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={{ JSON.stringify({ id: $json.id, createdTime: $json.createdTime, ...($json.fields || {}) }) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "c11",
+   "name": "איתור הלקוח לפי CustomerId",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    672,
+    0
+   ],
+   "parameters": {
+    "operation": "search",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblxwV7kZv7UF5wt2"
+    },
+    "filterByFormula": "={CustomerId} = {{ $json.CustomerId }}",
+    "returnAll": false,
+    "limit": 1,
+    "options": {}
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "f11",
+   "name": "שיטוח לקוח",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    896,
+    0
+   ],
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={{ JSON.stringify({ id: $json.id, ...($json.fields || {}) }) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "m11",
+   "name": "שליחת החשבונית במייל",
+   "type": "n8n-nodes-base.gmail",
+   "typeVersion": 2.2,
+   "position": [
+    1120,
+    0
+   ],
+   "parameters": {
+    "sendTo": "={{ $json.email }}",
+    "subject": "=אלקטרו-פלוס · חשבונית מס מספר {{ $('שיטוח חשבונית').item.json.InvoiceNumber }}",
+    "emailType": "html",
+    "message": "=<div dir=\"rtl\" style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1d1f20\"><div style=\"background:#5980a6;color:#fff;padding:20px 24px;font-size:20px;font-weight:700\">אלקטרו-פלוס בע\"מ</div><div style=\"padding:24px;border:1px solid #ddd;border-top:none\"><p>שלום {{ $json.Name }},</p><p>תודה על ההזמנה! החשבונית שלך מוכנה.</p><table style=\"border-collapse:collapse;margin:16px 0;width:100%\"><tr><td style=\"padding:8px;border-bottom:1px solid #eee\">מספר חשבונית</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:left\"><b>{{ $('שיטוח חשבונית').item.json.InvoiceNumber }}</b></td></tr><tr><td style=\"padding:8px;border-bottom:1px solid #eee\">סכום לפני מע\"מ</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:left\">{{ Number($('שיטוח חשבונית').item.json.Amount).toLocaleString(\"he-IL\") }} ₪</td></tr><tr><td style=\"padding:8px;border-bottom:1px solid #eee\">מע\"מ 18%</td><td style=\"padding:8px;border-bottom:1px solid #eee;text-align:left\">{{ Number($('שיטוח חשבונית').item.json.VatAmount).toLocaleString(\"he-IL\") }} ₪</td></tr><tr><td style=\"padding:8px;font-size:18px\"><b>סה\"כ לתשלום</b></td><td style=\"padding:8px;text-align:left;font-size:18px\"><b>{{ Number($('שיטוח חשבונית').item.json.Total).toLocaleString(\"he-IL\") }} ₪</b></td></tr></table><p style=\"text-align:center;margin:24px 0\"><a href=\"{{ $('שיטוח חשבונית').item.json.PdfUrl }}\" style=\"background:#5980a6;color:#fff;padding:12px 28px;text-decoration:none;font-weight:700;display:inline-block\">לצפייה בחשבונית</a></p><p style=\"color:#666;font-size:13px\">ההזמנה בהכנה ותצא למשלוח בהקדם. לשאלות — השיבו למייל זה או פנו לבוט שירות הלקוחות שלנו בטלגרם.</p></div><div style=\"padding:12px 24px;font-size:12px;color:#888\">אלקטרו-פלוס בע\"מ · מסמך זה נוצר אוטומטית על ידי מערכת ERP-AI</div></div>",
+    "options": {
+     "appendAttribution": false,
+     "senderName": "אלקטרו-פלוס"
+    }
+   },
+   "credentials": {
+    "gmailOAuth2": {
+     "id": "vhvfHH1G1P4NkxvY",
+     "name": "Gmail OAuth2 API"
+    }
+   }
+  },
+  {
+   "id": "k11",
+   "name": "סטטוס: נשלחה ללקוח",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    1344,
+    0
+   ],
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "rec",
+       "name": "id",
+       "value": "={{ $('שיטוח חשבונית').item.json.id }}",
+       "type": "string"
+      },
+      {
+       "id": "st",
+       "name": "Status",
+       "value": "נשלחה ללקוח",
+       "type": "string"
+      }
+     ]
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "w11",
+   "name": "עדכון החשבונית",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    1568,
+    0
+   ],
+   "parameters": {
+    "operation": "update",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblUyOaKSKEgea5wn"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [
+      "id"
+     ],
+     "schema": []
+    },
+    "options": {
+     "typecast": true
+    }
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  }
+ ],
+ "connections": {
+  "כל דקה": {
+   "main": [
+    [
+     {
+      "node": "חשבוניות שהופקו וטרם נשלחו",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "חשבוניות שהופקו וטרם נשלחו": {
+   "main": [
+    [
+     {
+      "node": "שיטוח חשבונית",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "שיטוח חשבונית": {
+   "main": [
+    [
+     {
+      "node": "איתור הלקוח לפי CustomerId",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "איתור הלקוח לפי CustomerId": {
+   "main": [
+    [
+     {
+      "node": "שיטוח לקוח",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "שיטוח לקוח": {
+   "main": [
+    [
+     {
+      "node": "שליחת החשבונית במייל",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "שליחת החשבונית במייל": {
+   "main": [
+    [
+     {
+      "node": "סטטוס: נשלחה ללקוח",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "סטטוס: נשלחה ללקוח": {
+   "main": [
+    [
+     {
+      "node": "עדכון החשבונית",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ }
+}

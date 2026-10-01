@@ -1,0 +1,22 @@
+{
+  "name": "6 - סוכן מכירות - בדיקת תשובות",
+  "settings": {"executionOrder": "v1"},
+  "nodes": [
+    {"id": "9ab2348d-f8ff-442e-9424-3b4073779bcf", "name": "Sticky Note", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [320, -288], "parameters": {"content": "## 6 · סוכן מכירות — בדיקת תשובות (WF4 במפרט)\n**מה:** כל 30 דקות סורק מיילים חדשים שלא נקראו. אם השולח הוא ליד בטבלת Leads — מעדכן את הסטטוס ל\"הגיב\" ומסמן את המייל כנקרא.\n**צריך:** credentials של Gmail ו-Airtable.\n**הערה:** מיילים משולחים שאינם לידים נשארים לא-נקראים ולא נוגעים בהם.", "color": 4}},
+    {"id": "835ee026-76a0-42d0-8bb9-06c3afcce912", "name": "כל 30 דקות", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.4, "position": [0, 0], "parameters": {"rule": {"interval": [{"field": "minutes", "minutesInterval": 30}]}}},
+    {"id": "999f518c-fece-4a7e-9107-a38fd73d773a", "name": "מיילים חדשים שלא נקראו", "type": "n8n-nodes-base.gmail", "typeVersion": 2.2, "position": [224, 0], "parameters": {"operation": "getAll", "limit": 20, "filters": {"q": "in:inbox newer_than:2d", "readStatus": "unread"}}, "credentials": {"gmailOAuth2": {"id": "vhvfHH1G1P4NkxvY", "name": "Gmail OAuth2 API"}}},
+    {"id": "a8e446e0-c8ce-4cb9-9e41-c454ea34c04e", "name": "חילוץ כתובת השולח", "type": "n8n-nodes-base.set", "typeVersion": 3.5, "position": [448, 0], "parameters": {"assignments": {"assignments": [{"id": "em", "name": "senderEmail", "value": "={{ ($json.From.match(/<([^>]+)>/) || [null, $json.From])[1].trim().toLowerCase() }}", "type": "string"}]}, "includeOtherFields": true, "options": {}}},
+    {"id": "7b98a0bc-0043-4dec-9f98-fa91692755c7", "name": "חיפוש הליד לפי אימייל", "type": "n8n-nodes-base.airtable", "typeVersion": 2.2, "position": [672, 0], "parameters": {"operation": "search", "base": {"__rl": true, "mode": "id", "value": "appxsZIq0qv9Buy9d"}, "table": {"__rl": true, "mode": "id", "value": "tblxwV7kZv7UF5wt2"}, "filterByFormula": "=LOWER({email}) = \"{{ $json.senderEmail }}\"", "returnAll": false, "limit": 1, "options": {}}, "credentials": {"airtableTokenApi": {"id": "boaHIpSj43LBaGp0", "name": "Airtable Personal Access Token account 2"}}},
+    {"id": "c3a90975-0f6a-40ea-9725-1081005c54b9", "name": "סטטוס: הגיב", "type": "n8n-nodes-base.set", "typeVersion": 3.5, "position": [896, 0], "parameters": {"assignments": {"assignments": [{"id": "rec", "name": "id", "value": "={{ $json.id }}", "type": "string"}, {"id": "st", "name": "Status", "value": "הגיב", "type": "string"}]}, "options": {}}},
+    {"id": "ea81aecb-72b4-4845-963a-bfc6b9430f46", "name": "עדכון סטטוס הליד", "type": "n8n-nodes-base.airtable", "typeVersion": 2.2, "position": [1120, 0], "parameters": {"operation": "update", "base": {"__rl": true, "mode": "id", "value": "appxsZIq0qv9Buy9d"}, "table": {"__rl": true, "mode": "id", "value": "tblxwV7kZv7UF5wt2"}, "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": ["id"], "schema": []}, "options": {"typecast": true}}, "credentials": {"airtableTokenApi": {"id": "boaHIpSj43LBaGp0", "name": "Airtable Personal Access Token account 2"}}},
+    {"id": "b723895d-abc0-4de8-816b-2e6301bc61a8", "name": "סימון המייל כנקרא", "type": "n8n-nodes-base.gmail", "typeVersion": 2.2, "position": [1344, 0], "parameters": {"operation": "markAsRead", "messageId": "={{ $('חילוץ כתובת השולח').item.json.id }}"}, "credentials": {"gmailOAuth2": {"id": "vhvfHH1G1P4NkxvY", "name": "Gmail OAuth2 API"}}}
+  ],
+  "connections": {
+    "כל 30 דקות": {"main": [[{"node": "מיילים חדשים שלא נקראו", "type": "main", "index": 0}]]},
+    "מיילים חדשים שלא נקראו": {"main": [[{"node": "חילוץ כתובת השולח", "type": "main", "index": 0}]]},
+    "חילוץ כתובת השולח": {"main": [[{"node": "חיפוש הליד לפי אימייל", "type": "main", "index": 0}]]},
+    "חיפוש הליד לפי אימייל": {"main": [[{"node": "סטטוס: הגיב", "type": "main", "index": 0}]]},
+    "סטטוס: הגיב": {"main": [[{"node": "עדכון סטטוס הליד", "type": "main", "index": 0}]]},
+    "עדכון סטטוס הליד": {"main": [[{"node": "סימון המייל כנקרא", "type": "main", "index": 0}]]}
+  }
+}

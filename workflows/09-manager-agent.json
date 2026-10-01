@@ -1,0 +1,414 @@
+{
+ "name": "9 - סוכן המנהל (טלגרם)",
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "nodes": [
+  {
+   "id": "s9",
+   "name": "Sticky Note",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    1008,
+    0
+   ],
+   "parameters": {
+    "content": "## 9 · סוכן המנהל (WF9 במפרט)\n**מה:** הבעלים שואל בבוט טלגרם #1 (\"מה ההכנסות?\", \"כמה חשבוניות לא שולמו?\") → Summarize מחשב סיכומים מטבלת החשבוניות → הסוכן מנסח תשובה בעברית.\n**חובה להגדיר:** בצומת \"זה הבעלים?\" — הזן את ה-Chat ID של הבעלים (שלח /start ל-@userinfobot). כל אחד אחר מקבל \"אין הרשאה\".\n**צריך:** credential טלגרם (בוט המנהל), OpenAI, Airtable.\n**מגבלה מכוונת:** עד 100 חשבוניות, בלי כלים, בלי יצירת משימות.",
+    "color": 4
+   }
+  },
+  {
+   "id": "t9",
+   "name": "הודעה מהמנהל (בוט #1)",
+   "type": "n8n-nodes-base.telegramTrigger",
+   "typeVersion": 1.5,
+   "position": [
+    0,
+    192
+   ],
+   "parameters": {
+    "updates": [
+     "message"
+    ],
+    "additionalFields": {}
+   },
+   "credentials": {
+    "telegramApi": {
+     "id": "xoiaWooSlawB4FeI",
+     "name": "Telegram account"
+    }
+   }
+  },
+  {
+   "id": "if9",
+   "name": "זה הבעלים?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.3,
+   "position": [
+    224,
+    192
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "strict",
+      "version": 3
+     },
+     "conditions": [
+      {
+       "id": "own",
+       "leftValue": "={{ $json.message.chat.id.toString() }}",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       },
+       "rightValue": "OWNER_TELEGRAM_CHAT_ID"
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "q9",
+   "name": "שליפת חשבוניות",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    448,
+    96
+   ],
+   "executeOnce": true,
+   "parameters": {
+    "operation": "search",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblUyOaKSKEgea5wn"
+    },
+    "returnAll": false,
+    "limit": 100,
+    "options": {
+     "fields": [
+      "InvoiceNumber",
+      "CustomerId",
+      "Amount",
+      "VatAmount",
+      "Total",
+      "Status",
+      "Created"
+     ]
+    }
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "f9",
+   "name": "שיטוח שדות",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    640,
+    96
+   ],
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={{ JSON.stringify({ id: $json.id, ...($json.fields || {}) }) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "sb9",
+   "name": "סיכום לפי סטטוס",
+   "type": "n8n-nodes-base.summarize",
+   "typeVersion": 1.1,
+   "position": [
+    832,
+    0
+   ],
+   "parameters": {
+    "fieldsToSummarize": {
+     "values": [
+      {
+       "aggregation": "sum",
+       "field": "Total"
+      },
+      {
+       "aggregation": "sum",
+       "field": "Amount"
+      },
+      {
+       "aggregation": "count",
+       "field": "InvoiceNumber"
+      }
+     ]
+    },
+    "fieldsToSplitBy": "Status",
+    "options": {
+     "continueIfFieldNotFound": true,
+     "outputFormat": "singleItem"
+    }
+   }
+  },
+  {
+   "id": "st9",
+   "name": "סיכום כולל",
+   "type": "n8n-nodes-base.summarize",
+   "typeVersion": 1.1,
+   "position": [
+    832,
+    192
+   ],
+   "parameters": {
+    "fieldsToSummarize": {
+     "values": [
+      {
+       "aggregation": "sum",
+       "field": "Total"
+      },
+      {
+       "aggregation": "sum",
+       "field": "Amount"
+      },
+      {
+       "aggregation": "sum",
+       "field": "VatAmount"
+      },
+      {
+       "aggregation": "count",
+       "field": "InvoiceNumber"
+      },
+      {
+       "aggregation": "max",
+       "field": "Total"
+      }
+     ]
+    },
+    "options": {
+     "continueIfFieldNotFound": true,
+     "outputFormat": "singleItem"
+    }
+   }
+  },
+  {
+   "id": "deny9",
+   "name": "אין הרשאה",
+   "type": "n8n-nodes-base.telegram",
+   "typeVersion": 1.2,
+   "position": [
+    448,
+    320
+   ],
+   "parameters": {
+    "chatId": "={{ $json.message.chat.id }}",
+    "text": "הבוט הזה מיועד לבעל העסק בלבד.",
+    "additionalFields": {
+     "appendAttribution": false
+    }
+   },
+   "credentials": {
+    "telegramApi": {
+     "id": "xoiaWooSlawB4FeI",
+     "name": "Telegram account"
+    }
+   }
+  },
+  {
+   "id": "ag9",
+   "name": "סוכן המנהל",
+   "type": "@n8n/n8n-nodes-langchain.agent",
+   "typeVersion": 3.1,
+   "position": [
+    1056,
+    192
+   ],
+   "parameters": {
+    "promptType": "define",
+    "text": "=שאלת הבעלים: {{ $('הודעה מהמנהל (בוט #1)').first().json.message.text }}\n\nנתונים מחושבים מטבלת החשבוניות (עד 100 חשבוניות):\nסיכום כולל: {{ JSON.stringify($json) }}\nפילוח לפי סטטוס: {{ JSON.stringify($('סיכום לפי סטטוס').first().json) }}\n\nהתאריך היום: {{ $now.setZone('Asia/Jerusalem').toFormat('dd/MM/yyyy') }}",
+    "options": {
+     "systemMessage": "אתה סוכן המנהל של מערכת ERP-AI של \"אלקטרו-פלוס בע\"מ\". אתה מדבר רק עם בעל העסק.\n\nהנתונים כבר מחושבים ומגיעים אליך בהודעה (סיכומים מטבלת החשבוניות). תפקידך לנסח תשובה קצרה וברורה בעברית, לא לחשב מחדש ולא להמציא.\n\nהנחיות:\n- \"הכנסות\" = סכום Total של החשבוניות (כולל מע\"מ). ציין גם את הסכום לפני מע\"מ (Amount) אם רלוונטי.\n- \"לא שולם\" / \"פתוח\" = חשבוניות בכל סטטוס שאינו \"שולמה\".\n- מספרים בפורמט ישראלי עם ₪, למשל 12,340 ₪.\n- אם השאלה אינה על חשבוניות/הכנסות/מספרים — ענה בקצרה שאתה עונה על אנליטיקה של העסק בלבד.\n- אל תשתמש ב-Markdown; טקסט פשוט עם שורות.",
+     "maxIterations": 3
+    }
+   }
+  },
+  {
+   "id": "lm9",
+   "name": "OpenAI Chat Model",
+   "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+   "typeVersion": 1.3,
+   "position": [
+    1056,
+    416
+   ],
+   "parameters": {
+    "model": {
+     "__rl": true,
+     "mode": "list",
+     "value": "gpt-5-mini"
+    },
+    "options": {}
+   },
+   "credentials": {
+    "openAiApi": {
+     "id": "z7NsVMXkmps9SYj5",
+     "name": "OpenAI account 2"
+    }
+   }
+  },
+  {
+   "id": "mem9",
+   "name": "זיכרון שיחה",
+   "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+   "typeVersion": 1.4,
+   "position": [
+    1200,
+    416
+   ],
+   "parameters": {
+    "sessionIdType": "customKey",
+    "sessionKey": "={{ $('הודעה מהמנהל (בוט #1)').first().json.message.chat.id }}",
+    "contextWindowLength": 6
+   }
+  },
+  {
+   "id": "rep9",
+   "name": "תשובה לבעלים",
+   "type": "n8n-nodes-base.telegram",
+   "typeVersion": 1.2,
+   "position": [
+    1408,
+    192
+   ],
+   "parameters": {
+    "chatId": "={{ $('הודעה מהמנהל (בוט #1)').first().json.message.chat.id }}",
+    "text": "={{ $json.output }}",
+    "additionalFields": {
+     "appendAttribution": false,
+     "parse_mode": "HTML"
+    }
+   },
+   "credentials": {
+    "telegramApi": {
+     "id": "xoiaWooSlawB4FeI",
+     "name": "Telegram account"
+    }
+   }
+  }
+ ],
+ "connections": {
+  "הודעה מהמנהל (בוט #1)": {
+   "main": [
+    [
+     {
+      "node": "זה הבעלים?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "זה הבעלים?": {
+   "main": [
+    [
+     {
+      "node": "שליפת חשבוניות",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "אין הרשאה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "שליפת חשבוניות": {
+   "main": [
+    [
+     {
+      "node": "שיטוח שדות",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "שיטוח שדות": {
+   "main": [
+    [
+     {
+      "node": "סיכום לפי סטטוס",
+      "type": "main",
+      "index": 0
+     },
+     {
+      "node": "סיכום כולל",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "סיכום כולל": {
+   "main": [
+    [
+     {
+      "node": "סוכן המנהל",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "סוכן המנהל": {
+   "main": [
+    [
+     {
+      "node": "תשובה לבעלים",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "OpenAI Chat Model": {
+   "ai_languageModel": [
+    [
+     {
+      "node": "סוכן המנהל",
+      "type": "ai_languageModel",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "זיכרון שיחה": {
+   "ai_memory": [
+    [
+     {
+      "node": "סוכן המנהל",
+      "type": "ai_memory",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ }
+}

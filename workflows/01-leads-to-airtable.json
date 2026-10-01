@@ -1,0 +1,280 @@
+{
+  "name": "1 - Leads -> Airtable",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "a35ea6d4-19c5-4c9d-be27-dc92d9a3a566",
+        "options": {
+          "ipWhitelist": ""
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -896,
+        160
+      ],
+      "id": "5892c1f1-7d67-43bc-99f6-98b148671ada",
+      "name": "Webhook",
+      "webhookId": "a35ea6d4-19c5-4c9d-be27-dc92d9a3a566"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appxsZIq0qv9Buy9d",
+          "mode": "list",
+          "cachedResultName": "ERP-AI",
+          "cachedResultUrl": "https://airtable.com/appxsZIq0qv9Buy9d"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxwV7kZv7UF5wt2",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appxsZIq0qv9Buy9d/tblxwV7kZv7UF5wt2"
+        },
+        "filterByFormula": "=={email}=\"{{ $json.query.email }}\"",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -576,
+        160
+      ],
+      "id": "35d6e8dd-d78a-40e4-b77a-84feede944b7",
+      "name": "Search records",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "boaHIpSj43LBaGp0",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "58d562e4-4f00-4df7-911d-df79fe81c3b8",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        128
+      ],
+      "id": "6b052671-a055-464f-9505-cf5f2c9920fc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appxsZIq0qv9Buy9d",
+          "mode": "list",
+          "cachedResultName": "ERP-AI",
+          "cachedResultUrl": "https://airtable.com/appxsZIq0qv9Buy9d"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxwV7kZv7UF5wt2",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appxsZIq0qv9Buy9d/tblxwV7kZv7UF5wt2"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Webhook').item.json.query.name }}",
+            "email": "={{ $('Webhook').item.json.query.email }}",
+            "Company": "={{ $('Webhook').item.json.query['company '] }}",
+            "Status": "New"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created",
+              "displayName": "Created",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "23fe7574-25c5-4120-9fd5-7cfc6712b3ee",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "boaHIpSj43LBaGp0",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "eyal.myers1@gmail.com",
+        "subject": "new lead with error ",
+        "message": "a contact with data problems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -368,
+        320
+      ],
+      "id": "56890bd4-7e48-4ea0-aabb-f8ed2a8dfdc3",
+      "name": "Send a message",
+      "webhookId": "321e5c6a-06e4-44df-b6ff-76994b96295d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vhvfHH1G1P4NkxvY",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "46359adf-9e87-4626-ae6a-d567d3323deb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ea00fc8d8c2e6994c3b0720a61e22510d5ec3256484bf7154ba484aec8890b86"
+  },
+  "nodeGroups": [],
+  "id": "O6FWBdfJtYR8OEwg",
+  "tags": []
+}

@@ -1,0 +1,1187 @@
+{
+ "name": "10 - Webhook לאפליקציה",
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "nodes": [
+  {
+   "id": "s10",
+   "name": "Sticky Note",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    1136,
+    1376
+   ],
+   "parameters": {
+    "content": "## 10 · Webhook לאפליקציה (WF13 במפרט)\n**POST** https://<n8n>/webhook/erp-app עם JSON:\n- `{ \"action\":\"list\", \"table\":\"Leads|Invoices|Products|Tasks\" }` → `{ ok, records:[…] }`\n- `{ \"action\":\"create\", \"table\":\"…\", \"payload\":{…שדות…} }` → `{ ok, record }`\n- `{ \"action\":\"update\", \"table\":\"…\", \"payload\":{ \"id\":\"rec…\", …שדות… } }` → `{ ok, record }`\n- `{ \"action\":\"order\", \"payload\":{ \"name\",\"email\",\"company\",\"amount\",\"items\":[{name,qty,price}] } }` → לקוח (upsert ב-Leads לפי email) + חשבונית \"ממתין לאימות\" + משימה. Workflow 5 מחשב מע\"מ, 8 מפיק מסמך, 11 שולח מייל.\n- `{ \"action\":\"chat\", \"message\":\"…\", \"sessionId\":\"…\" }` → `{ ok, reply }`\n\n**צריך:** Airtable, OpenAI. מאגר וקטורי בזיכרון — memory keys `mypolicies` / `theproducts` כמו ב-3 ו-4.",
+    "color": 4
+   }
+  },
+  {
+   "id": "wh",
+   "name": "Webhook מהאפליקציה",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2.1,
+   "position": [
+    0,
+    480
+   ],
+   "webhookId": "845b4f06-9b6b-4a86-9006-af26cc52845f",
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "erp-app",
+    "responseMode": "responseNode",
+    "options": {
+     "allowedOrigins": "*"
+    }
+   }
+  },
+  {
+   "id": "norm",
+   "name": "נירמול הבקשה",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    224,
+    480
+   ],
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a",
+       "name": "action",
+       "value": "={{ ($json.body?.action ?? $json.action ?? \"\").toString().toLowerCase() }}",
+       "type": "string"
+      },
+      {
+       "id": "t",
+       "name": "table",
+       "value": "={{ $json.body?.table ?? $json.table ?? \"\" }}",
+       "type": "string"
+      },
+      {
+       "id": "tid",
+       "name": "tableId",
+       "value": "={{ ({\"leads\": \"tblxwV7kZv7UF5wt2\", \"invoices\": \"tblUyOaKSKEgea5wn\", \"products\": \"tblABDbFCYw5lOj8b\", \"tasks\": \"tblxNIfJDHc9uJoTT\"})[($json.body?.table ?? $json.table ?? \"\").toString().toLowerCase()] ?? \"\" }}",
+       "type": "string"
+      },
+      {
+       "id": "p",
+       "name": "payload",
+       "value": "={{ $json.body?.payload ?? $json.payload ?? {} }}",
+       "type": "object"
+      },
+      {
+       "id": "m",
+       "name": "message",
+       "value": "={{ $json.body?.message ?? $json.message ?? \"\" }}",
+       "type": "string"
+      },
+      {
+       "id": "s",
+       "name": "sessionId",
+       "value": "={{ $json.body?.sessionId ?? $json.sessionId ?? \"app-owner\" }}",
+       "type": "string"
+      }
+     ]
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "sw",
+   "name": "ניתוב לפי action",
+   "type": "n8n-nodes-base.switch",
+   "typeVersion": 3.4,
+   "position": [
+    448,
+    416
+   ],
+   "parameters": {
+    "rules": {
+     "values": [
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": false,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 1
+        },
+        "conditions": [
+         {
+          "leftValue": "={{ $json.action }}",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          },
+          "rightValue": "list"
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "list"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": false,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 1
+        },
+        "conditions": [
+         {
+          "leftValue": "={{ $json.action }}",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          },
+          "rightValue": "create"
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "create"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": false,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 1
+        },
+        "conditions": [
+         {
+          "leftValue": "={{ $json.action }}",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          },
+          "rightValue": "update"
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "update"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": false,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 1
+        },
+        "conditions": [
+         {
+          "leftValue": "={{ $json.action }}",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          },
+          "rightValue": "order"
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "order"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": false,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 1
+        },
+        "conditions": [
+         {
+          "leftValue": "={{ $json.action }}",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          },
+          "rightValue": "chat"
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "chat"
+      }
+     ]
+    },
+    "options": {
+     "fallbackOutput": "extra",
+     "renameFallbackOutput": "unknown"
+    }
+   }
+  },
+  {
+   "id": "שליפת רשומות",
+   "name": "שליפת רשומות",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    992,
+    0
+   ],
+   "parameters": {
+    "operation": "search",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "={{ $json.tableId }}"
+    },
+    "returnAll": true,
+    "options": {}
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "id": "agg",
+   "name": "איסוף לרשימה",
+   "type": "n8n-nodes-base.aggregate",
+   "typeVersion": 1,
+   "position": [
+    1520,
+    0
+   ],
+   "parameters": {
+    "aggregate": "aggregateAllItemData",
+    "destinationFieldName": "records",
+    "options": {}
+   }
+  },
+  {
+   "id": "תשובה: רשימה",
+   "name": "תשובה: רשימה",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.5,
+   "position": [
+    1744,
+    0
+   ],
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ ok: true, table: $('נירמול הבקשה').first().json.table, records: ($json.records || []).filter(r => r && r.id).map(r => ({ id: r.id, createdTime: r.createdTime, ...(r.fields || {}) })) }) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "p2r",
+   "name": "payload → רשומה",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    992,
+    192
+   ],
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={{ JSON.stringify($json.payload) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "יצירת רשומה",
+   "name": "יצירת רשומה",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    1520,
+    192
+   ],
+   "parameters": {
+    "operation": "create",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "={{ $('נירמול הבקשה').first().json.tableId }}"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {
+     "typecast": true
+    }
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "תשובה: נוצר",
+   "name": "תשובה: נוצר",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.5,
+   "position": [
+    1744,
+    192
+   ],
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ ok: true, record: { id: $json.id, createdTime: $json.createdTime, ...($json.fields || {}) } }) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "p2u",
+   "name": "payload → עדכון",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    992,
+    384
+   ],
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={{ JSON.stringify($json.payload) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "עדכון רשומה",
+   "name": "עדכון רשומה",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    1520,
+    384
+   ],
+   "parameters": {
+    "operation": "update",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "={{ $('נירמול הבקשה').first().json.tableId }}"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [
+      "id"
+     ],
+     "schema": []
+    },
+    "options": {
+     "typecast": true
+    }
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "תשובה: עודכן",
+   "name": "תשובה: עודכן",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.5,
+   "position": [
+    1744,
+    384
+   ],
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ ok: true, record: { id: $json.id, createdTime: $json.createdTime, ...($json.fields || {}) } }) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "לקוח: איתור או יצירה",
+   "name": "לקוח: איתור או יצירה",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    992,
+    576
+   ],
+   "parameters": {
+    "operation": "upsert",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblxwV7kZv7UF5wt2"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "matchingColumns": [
+      "email"
+     ],
+     "value": {
+      "email": "={{ ($json.payload.email || \"\").toString().trim().toLowerCase() }}",
+      "Name": "={{ $json.payload.name || $json.payload.Name || \"\" }}",
+      "Company": "={{ $json.payload.company || $json.payload.Company || \"\" }}",
+      "Status": "לקוח"
+     },
+     "schema": [
+      {
+       "id": "email",
+       "displayName": "email",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "Name",
+       "displayName": "Name",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "Company",
+       "displayName": "Company",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "Status",
+       "displayName": "Status",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      }
+     ]
+    },
+    "options": {
+     "typecast": true
+    }
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "bi",
+   "name": "בניית חשבונית מההזמנה",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    1520,
+    576
+   ],
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "c",
+       "name": "CustomerId",
+       "value": "={{ $json.fields?.CustomerId ?? $json.CustomerId }}",
+       "type": "number"
+      },
+      {
+       "id": "a",
+       "name": "Amount",
+       "value": "={{ Math.round(Number($('נירמול הבקשה').first().json.payload.amount || 0) * 100) / 100 }}",
+       "type": "number"
+      },
+      {
+       "id": "s",
+       "name": "Status",
+       "value": "ממתין לאימות",
+       "type": "string"
+      }
+     ]
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "יצירת חשבונית",
+   "name": "יצירת חשבונית",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    1744,
+    576
+   ],
+   "parameters": {
+    "operation": "create",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblUyOaKSKEgea5wn"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {
+     "typecast": true
+    }
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "tk",
+   "name": "משימת הכנת הזמנה",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.5,
+   "position": [
+    1968,
+    576
+   ],
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "t",
+       "name": "Title",
+       "value": "=הזמנה חדשה מ-{{ $('לקוח: איתור או יצירה').first().json.fields.Name }} ({{ $('לקוח: איתור או יצירה').first().json.fields.email }}): {{ ($('נירמול הבקשה').first().json.payload.items || []).map(i => `${i.name} ×${i.qty || 1}`).join(', ') }} — {{ $('נירמול הבקשה').first().json.payload.amount }} ₪",
+       "type": "string"
+      },
+      {
+       "id": "s",
+       "name": "Status",
+       "value": "לביצוע",
+       "type": "string"
+      }
+     ]
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "יצירת משימה",
+   "name": "יצירת משימה",
+   "type": "n8n-nodes-base.airtable",
+   "typeVersion": 2.2,
+   "position": [
+    2192,
+    576
+   ],
+   "parameters": {
+    "operation": "create",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblxNIfJDHc9uJoTT"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {
+     "typecast": true
+    }
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "תשובה: הזמנה התקבלה",
+   "name": "תשובה: הזמנה התקבלה",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.5,
+   "position": [
+    2416,
+    576
+   ],
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ ok: true, customerId: $('לקוח: איתור או יצירה').first().json.fields.CustomerId, invoiceRecordId: $('יצירת חשבונית').first().json.id, message: 'ההזמנה התקבלה. החשבונית תישלח לאימייל שלך תוך דקות.' }) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "ag",
+   "name": "סוכן האפליקציה",
+   "type": "@n8n/n8n-nodes-langchain.agent",
+   "typeVersion": 3.1,
+   "position": [
+    928,
+    768
+   ],
+   "parameters": {
+    "promptType": "define",
+    "text": "={{ $json.message }}",
+    "options": {
+     "systemMessage": "אתה העוזר החכם של מערכת ERP-AI של \"אלקטרו-פלוס בע\"מ\" (AI Electronics), ואתה משוחח עם בעל העסק דרך אפליקציית הניהול. ענה בעברית, קצר וענייני.\n\nכלים:\n- invoices_table — כל החשבוניות (כל רשומה: fields.InvoiceNumber, fields.CustomerId, fields.Amount, fields.VatAmount, fields.Total, fields.Status, fields.PdfUrl). לשאלות על הכנסות, חובות, סטטוסים — קרא לכלי וסכם בעצמך. חשבונית \"שולמה\" = שולמה; כל סטטוס אחר = פתוחה.\n- leads_table — לידים ולקוחות (fields.Name, fields.email, fields.Company, fields.Status, fields.CustomerId). סטטוס \"לקוח\" = לקוח; New = ליד חדש; Contacted = נשלח מייל; הגיב = ענה למייל.\n- product_catalog ו-business_policy — מאגר ידע (RAG) לשאלות על מוצרים, מחירים ומדיניות.\n\nכללים: אל תמציא נתונים; אם הכלי לא החזיר — אמור זאת. מספרים עם ₪ בפורמט ישראלי. בלי Markdown, טקסט פשוט.",
+     "maxIterations": 6
+    }
+   }
+  },
+  {
+   "id": "lm",
+   "name": "OpenAI Chat Model",
+   "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+   "typeVersion": 1.3,
+   "position": [
+    672,
+    992
+   ],
+   "parameters": {
+    "model": {
+     "__rl": true,
+     "mode": "list",
+     "value": "gpt-5-mini"
+    },
+    "options": {}
+   },
+   "credentials": {
+    "openAiApi": {
+     "id": "z7NsVMXkmps9SYj5",
+     "name": "OpenAI account 2"
+    }
+   }
+  },
+  {
+   "id": "mem",
+   "name": "זיכרון צ'אט",
+   "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+   "typeVersion": 1.4,
+   "position": [
+    800,
+    992
+   ],
+   "parameters": {
+    "sessionIdType": "customKey",
+    "sessionKey": "={{ $('נירמול הבקשה').first().json.sessionId || 'app-owner' }}",
+    "contextWindowLength": 8
+   }
+  },
+  {
+   "id": "ti",
+   "name": "invoices_table חשבוניות",
+   "type": "n8n-nodes-base.airtableTool",
+   "typeVersion": 2.2,
+   "position": [
+    928,
+    992
+   ],
+   "parameters": {
+    "operation": "search",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblUyOaKSKEgea5wn"
+    },
+    "returnAll": false,
+    "limit": 100,
+    "options": {}
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "tl",
+   "name": "leads_table לידים ולקוחות",
+   "type": "n8n-nodes-base.airtableTool",
+   "typeVersion": 2.2,
+   "position": [
+    1056,
+    992
+   ],
+   "parameters": {
+    "operation": "search",
+    "base": {
+     "__rl": true,
+     "mode": "id",
+     "value": "appxsZIq0qv9Buy9d"
+    },
+    "table": {
+     "__rl": true,
+     "mode": "id",
+     "value": "tblxwV7kZv7UF5wt2"
+    },
+    "returnAll": false,
+    "limit": 100,
+    "options": {}
+   },
+   "credentials": {
+    "airtableTokenApi": {
+     "id": "boaHIpSj43LBaGp0",
+     "name": "Airtable Personal Access Token account 2"
+    }
+   }
+  },
+  {
+   "id": "vp",
+   "name": "product_catalog קטלוג המוצרים",
+   "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+   "typeVersion": 1.3,
+   "position": [
+    1184,
+    992
+   ],
+   "parameters": {
+    "mode": "retrieve-as-tool",
+    "toolDescription": "חיפוש בקטלוג המוצרים: שם, מק\"ט, מחיר, מפרט, מלאי.",
+    "memoryKey": {
+     "__rl": true,
+     "mode": "list",
+     "value": "theproducts"
+    },
+    "topK": 5
+   }
+  },
+  {
+   "id": "ep",
+   "name": "Embeddings - מוצרים",
+   "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+   "typeVersion": 1.2,
+   "position": [
+    1184,
+    1200
+   ],
+   "parameters": {
+    "options": {}
+   },
+   "credentials": {
+    "openAiApi": {
+     "id": "z7NsVMXkmps9SYj5",
+     "name": "OpenAI account 2"
+    }
+   }
+  },
+  {
+   "id": "vb",
+   "name": "business_policy מדיניות העסק",
+   "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+   "typeVersion": 1.3,
+   "position": [
+    1472,
+    992
+   ],
+   "parameters": {
+    "mode": "retrieve-as-tool",
+    "toolDescription": "חיפוש במסמך מדיניות העסק (משלוחים, החזרות, אחריות, תשלומים, שעות פעילות).",
+    "memoryKey": {
+     "__rl": true,
+     "mode": "list",
+     "value": "mypolicies"
+    },
+    "topK": 4
+   }
+  },
+  {
+   "id": "eb",
+   "name": "Embeddings - מדיניות",
+   "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+   "typeVersion": 1.2,
+   "position": [
+    1472,
+    1184
+   ],
+   "parameters": {
+    "options": {}
+   },
+   "credentials": {
+    "openAiApi": {
+     "id": "z7NsVMXkmps9SYj5",
+     "name": "OpenAI account 2"
+    }
+   }
+  },
+  {
+   "id": "תשובה: צ'אט",
+   "name": "תשובה: צ'אט",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.5,
+   "position": [
+    1792,
+    768
+   ],
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ ok: true, reply: $json.output }) }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "תשובה: action לא מוכר",
+   "name": "תשובה: action לא מוכר",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.5,
+   "position": [
+    992,
+    1376
+   ],
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ ok: false, error: \"action לא מוכר: \" + $json.action + \". השתמש ב-list / create / update / order / chat\" }) }}",
+    "options": {
+     "responseCode": 400
+    }
+   }
+  }
+ ],
+ "connections": {
+  "Webhook מהאפליקציה": {
+   "main": [
+    [
+     {
+      "node": "נירמול הבקשה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "נירמול הבקשה": {
+   "main": [
+    [
+     {
+      "node": "ניתוב לפי action",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "ניתוב לפי action": {
+   "main": [
+    [
+     {
+      "node": "שליפת רשומות",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "payload → רשומה",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "payload → עדכון",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "לקוח: איתור או יצירה",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "סוכן האפליקציה",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "תשובה: action לא מוכר",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "שליפת רשומות": {
+   "main": [
+    [
+     {
+      "node": "איסוף לרשימה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "איסוף לרשימה": {
+   "main": [
+    [
+     {
+      "node": "תשובה: רשימה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "payload → רשומה": {
+   "main": [
+    [
+     {
+      "node": "יצירת רשומה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "יצירת רשומה": {
+   "main": [
+    [
+     {
+      "node": "תשובה: נוצר",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "payload → עדכון": {
+   "main": [
+    [
+     {
+      "node": "עדכון רשומה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "עדכון רשומה": {
+   "main": [
+    [
+     {
+      "node": "תשובה: עודכן",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "לקוח: איתור או יצירה": {
+   "main": [
+    [
+     {
+      "node": "בניית חשבונית מההזמנה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "בניית חשבונית מההזמנה": {
+   "main": [
+    [
+     {
+      "node": "יצירת חשבונית",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "יצירת חשבונית": {
+   "main": [
+    [
+     {
+      "node": "משימת הכנת הזמנה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "משימת הכנת הזמנה": {
+   "main": [
+    [
+     {
+      "node": "יצירת משימה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "יצירת משימה": {
+   "main": [
+    [
+     {
+      "node": "תשובה: הזמנה התקבלה",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "סוכן האפליקציה": {
+   "main": [
+    [
+     {
+      "node": "תשובה: צ'אט",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "OpenAI Chat Model": {
+   "ai_languageModel": [
+    [
+     {
+      "node": "סוכן האפליקציה",
+      "type": "ai_languageModel",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "זיכרון צ'אט": {
+   "ai_memory": [
+    [
+     {
+      "node": "סוכן האפליקציה",
+      "type": "ai_memory",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "invoices_table חשבוניות": {
+   "ai_tool": [
+    [
+     {
+      "node": "סוכן האפליקציה",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "leads_table לידים ולקוחות": {
+   "ai_tool": [
+    [
+     {
+      "node": "סוכן האפליקציה",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "product_catalog קטלוג המוצרים": {
+   "ai_tool": [
+    [
+     {
+      "node": "סוכן האפליקציה",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Embeddings - מוצרים": {
+   "ai_embedding": [
+    [
+     {
+      "node": "product_catalog קטלוג המוצרים",
+      "type": "ai_embedding",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "business_policy מדיניות העסק": {
+   "ai_tool": [
+    [
+     {
+      "node": "סוכן האפליקציה",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Embeddings - מדיניות": {
+   "ai_embedding": [
+    [
+     {
+      "node": "business_policy מדיניות העסק",
+      "type": "ai_embedding",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ }
+}

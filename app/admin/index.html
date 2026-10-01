@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERP-AI · ניהול</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Heebo:wght@400;500;600;700&display=swap">
+<style>
+  :root { --font-heading: "Barlow Condensed", "Heebo", system-ui, sans-serif; --font-body: "Barlow", "Heebo", system-ui, sans-serif; }
+  body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); min-height: 100vh; }
+  .num { font-feature-settings: "tnum" 1; }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+  /* shell */
+  .shell { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+  .side { background: var(--color-accent-900); color: var(--color-bg); display: flex; flex-direction: column; padding: 20px 16px; position: sticky; top: 0; height: 100vh; }
+  .side .brand { font-family: var(--font-heading); font-weight: 600; font-size: 22px; line-height: 1.1; padding: 4px 8px 20px; border-bottom: 1px solid color-mix(in srgb, var(--color-bg) 14%, transparent); }
+  .side .brand small { display: block; font-size: 11px; letter-spacing: .12em; color: var(--color-accent-300); margin-top: 4px; font-family: var(--font-body); font-weight: 500; }
+  .side nav { display: flex; flex-direction: column; gap: 2px; margin-top: 16px; }
+  .side nav a { display: flex; align-items: center; gap: 10px; padding: 9px 10px; color: inherit; text-decoration: none; font-size: 14.5px; opacity: .8; border-inline-start: 2px solid transparent; }
+  .side nav a:hover { opacity: 1; background: color-mix(in srgb, var(--color-bg) 6%, transparent); }
+  .side nav a.active { opacity: 1; background: color-mix(in srgb, var(--color-bg) 10%, transparent); border-inline-start-color: var(--color-accent-300); }
+  .side nav a svg { width: 17px; height: 17px; stroke-width: 1.5; flex: none; }
+  .side nav .sep { height: 1px; background: color-mix(in srgb, var(--color-bg) 14%, transparent); margin: 10px 8px; }
+  .side .foot { margin-top: auto; font-size: 12px; color: var(--color-accent-300); padding: 8px; display: grid; gap: 6px; }
+  .side .foot .status { display: inline-flex; align-items: center; gap: 6px; }
+  .side .foot .status i { width: 7px; height: 7px; border-radius: 50%; background: #7fd1a0; }
+  .side .foot .status.off i { background: #e0a84a; }
+  .main { padding: 24px clamp(16px, 3vw, 40px) 48px; min-width: 0; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .topbar h1 { font-size: clamp(28px, 3vw, 38px); margin: 0; line-height: 1; }
+  .topbar .sub { font-size: 13px; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin-top: 6px; }
+  .topbar .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { font-family: var(--font-heading); }
+  .btn-sm { padding: 5px 10px; font-size: 13px; }
+
+  /* dashboard */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .kpi { padding: 16px 18px; display: grid; gap: 6px; }
+  .kpi .l { font-size: 12.5px; color: color-mix(in srgb, var(--color-text) 65%, transparent); }
+  .kpi .v { font-family: var(--font-heading); font-weight: 600; font-size: 34px; line-height: 1; }
+  .kpi .v small { font-size: 16px; }
+  .kpi .d { font-size: 12px; color: var(--color-accent-700); }
+  .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .panel { padding: 18px; display: grid; gap: 12px; align-content: start; }
+  .panel h3 { margin: 0; font-size: 19px; display: flex; justify-content: space-between; align-items: baseline; }
+  .panel h3 a { font-family: var(--font-body); font-size: 12.5px; font-weight: 400; color: var(--color-accent-700); }
+  .bars { display: grid; gap: 8px; }
+  .bar { display: grid; grid-template-columns: 110px 1fr 40px; align-items: center; gap: 10px; font-size: 13px; }
+  .bar i { display: block; height: 14px; background: var(--color-accent); min-width: 2px; }
+  .bar b { text-align: left; font-family: var(--font-heading); }
+  .list { display: grid; gap: 6px; font-size: 13.5px; }
+  .list .row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
+  .list .row:last-child { border-bottom: 0; }
+  .list .row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* tables */
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .toolbar .input { max-width: 300px; }
+  .toolbar .chip { font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid var(--color-divider); background: transparent; color: var(--color-text); cursor: pointer; }
+  .toolbar .chip[aria-pressed="true"] { background: var(--color-accent-900); color: var(--color-bg); border-color: var(--color-accent-900); }
+  .toolbar .count { font-size: 13px; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin-inline-start: auto; }
+  .tablewrap { padding: 4px 16px 10px; overflow-x: auto; }
+  .table th { text-align: right; }
+  .table td { vertical-align: middle; }
+  .table td.num, .table th.num { text-align: left; }
+  .table .muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); font-size: 12.5px; }
+  .table .trunc { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .table select.input { min-height: 30px; padding: 2px 8px; font-size: 13px; width: auto; }
+  .table a { color: var(--color-accent-700); }
+  .tag { white-space: nowrap; }
+  .tag-ok { background: #e2f3e8; color: #1e5c3a; }
+  .tag-warn { background: #fbefd9; color: #7a4c0c; }
+  .tag-err { background: #f8e0e0; color: #7a1f1f; }
+  .empty { padding: 40px; text-align: center; color: color-mix(in srgb, var(--color-text) 60%, transparent); font-size: 14px; }
+  .skel { height: 14px; background: color-mix(in srgb, var(--color-text) 8%, transparent); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .4; } }
+
+  /* drawer / forms */
+  .backdrop { position: fixed; inset: 0; background: color-mix(in srgb, var(--color-accent-900) 55%, transparent); z-index: 60; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .backdrop.open { opacity: 1; pointer-events: auto; }
+  .drawer { position: fixed; top: 0; bottom: 0; inset-inline-start: 0; width: min(440px, 100%); background: var(--color-bg); z-index: 70; display: flex; flex-direction: column; transform: translateX(100%); transition: transform .25s ease; box-shadow: var(--shadow-lg); border-inline-end: 1px solid var(--color-divider); }
+  .drawer.open { transform: none; }
+  .drawer header { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; border-bottom: 1px solid var(--color-divider); }
+  .drawer header h2 { margin: 0; font-size: 22px; }
+  .drawer .body { flex: 1; overflow: auto; padding: 18px 22px; display: grid; gap: 12px; align-content: start; }
+  .drawer .foot { padding: 14px 22px 22px; border-top: 1px solid var(--color-divider); display: grid; gap: 8px; }
+  .field > span { display: block; font-size: 12.5px; margin-bottom: 5px; color: color-mix(in srgb, var(--color-text) 72%, transparent); }
+  .err { color: #a63d3d; font-size: 13px; min-height: 1em; }
+  .items { display: grid; gap: 6px; }
+  .items .it { display: grid; grid-template-columns: 1fr 64px 30px; gap: 6px; align-items: center; }
+  .items .it .input { min-height: 32px; }
+  .sumline { display: flex; justify-content: space-between; font-size: 14px; }
+  .sumline.grand { font-family: var(--font-heading); font-weight: 600; font-size: 20px; border-top: 1px solid var(--color-divider); padding-top: 8px; }
+  .close { width: 34px; height: 34px; padding: 0; }
+  .spin { width: 14px; height: 14px; border: 2px solid currentColor; border-inline-start-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; vertical-align: -2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* chat */
+  .chat { display: grid; grid-template-rows: 1fr auto; height: calc(100vh - 140px); min-height: 420px; }
+  .msgs { overflow: auto; padding: 18px; display: grid; gap: 10px; align-content: start; }
+  .msg { max-width: 72ch; padding: 10px 14px; font-size: 14.5px; line-height: 1.5; white-space: pre-wrap; }
+  .msg.me { justify-self: start; background: var(--color-accent-900); color: var(--color-bg); }
+  .msg.ai { justify-self: end; background: var(--color-surface); border: 1px solid var(--color-divider); }
+  .msg.ai.err { border-color: #c77; }
+  .msg time { display: block; font-size: 10.5px; opacity: .6; margin-top: 4px; }
+  .compose { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--color-divider); }
+  .compose .input { flex: 1; }
+  .suggest { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 16px 10px; }
+  .suggest button { font: inherit; font-size: 12.5px; padding: 5px 10px; border: 1px solid var(--color-divider); background: transparent; cursor: pointer; color: var(--color-accent-800); }
+  .suggest button:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+  .toast { position: fixed; bottom: 20px; inset-inline-start: 20px; background: var(--color-accent-900); color: var(--color-bg); padding: 10px 16px; font-size: 14px; z-index: 90; box-shadow: var(--shadow-lg); opacity: 0; transform: translateY(8px); transition: .2s; }
+  .toast.show { opacity: 1; transform: none; }
+
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    .side { position: static; height: auto; padding: 12px; }
+    .side nav { flex-direction: row; flex-wrap: wrap; }
+    .side nav .sep, .side .foot { display: none; }
+    .side .brand { padding-bottom: 8px; border: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .skel, .spin { animation: none; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">אלקטרו-פלוס<small>ERP-AI · ניהול</small></div>
+    <nav id="nav">
+      <a href="#dashboard" data-v="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>דשבורד</a>
+      <a href="#customers" data-v="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>לקוחות</a>
+      <a href="#leads" data-v="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>לידים</a>
+      <a href="#orders" data-v="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>הזמנות</a>
+      <a href="#invoices" data-v="invoices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>חשבוניות</a>
+      <a href="#products" data-v="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>מוצרים</a>
+      <a href="#tasks" data-v="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>משימות</a>
+      <div class="sep"></div>
+      <a href="#chat" data-v="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>הסוכן החכם</a>
+    </nav>
+    <div class="foot">
+      <span class="status" id="conn"><i></i><span>מתחבר…</span></span>
+      <span>Airtable · n8n Cloud</span>
+      <a href="../store/index.html" style="color:var(--color-accent-300)">↗ לחנות</a>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <header><h2 id="dTitle"></h2><button class="btn btn-secondary close" id="dClose" aria-label="סגור">✕</button></header>
+  <div class="body" id="dBody"></div>
+  <div class="foot" id="dFoot"></div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== הגדרות =====
+const WEBHOOK_URL = 'https://eyalmyers.app.n8n.cloud/webhook/erp-app';
+const STATUS = {
+  lead: ['New', 'Contacted', 'הגיב', 'לקוח', 'לא רלוונטי'],
+  invoice: ['ממתין לאימות', 'ממתין להפקה', 'הופק', 'נשלחה ללקוח', 'שולמה', 'בוטלה'],
+  task: ['לביצוע', 'בתהליך', 'הושלם']
+};
+const LEAD_HE = { New: 'חדש', Contacted: 'נשלח מייל', 'הגיב': 'הגיב', 'לקוח': 'לקוח', 'לא רלוונטי': 'לא רלוונטי' };
+const TAG = { New: 'tag-accent', Contacted: 'tag-neutral', 'הגיב': 'tag-ok', 'לקוח': 'tag-ok', 'לא רלוונטי': 'tag-neutral',
+  'ממתין לאימות': 'tag-warn', 'ממתין להפקה': 'tag-warn', 'הופק': 'tag-accent', 'נשלחה ללקוח': 'tag-accent', 'שולמה': 'tag-ok', 'בוטלה': 'tag-neutral',
+  'לביצוע': 'tag-warn', 'בתהליך': 'tag-accent', 'הושלם': 'tag-ok' };
+
+// ===== מצב =====
+const db = { Leads: [], Invoices: [], Products: [], Tasks: [] };
+const loaded = { Leads: false, Invoices: false, Products: false, Tasks: false };
+let online = null;
+const ils = n => Number(n || 0).toLocaleString('he-IL', { maximumFractionDigits: 0 });
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const dt = s => s ? new Date(s).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+const tagFor = s => `<span class="tag ${TAG[s] || 'tag-neutral'}">${esc(LEAD_HE[s] || s || '—')}</span>`;
+const isErr = s => /שגיאה/.test(s || '');
+const customerName = id => { const c = db.Leads.find(l => Number(l.CustomerId) === Number(id)); return c ? c.Name : (id ? `לקוח #${id}` : '—'); };
+const customerEmail = id => db.Leads.find(l => Number(l.CustomerId) === Number(id))?.email || '';
+
+// ===== API =====
+async function api(body) {
+  const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  let data; try { data = await res.json(); } catch { throw new Error('תשובה לא תקינה מהשרת'); }
+  if (!res.ok || !data.ok) throw new Error(data.error || `שגיאה ${res.status}`);
+  return data;
+}
+const normalize = r => r.fields ? { id: r.id, createdTime: r.createdTime, ...r.fields } : r;
+async function load(table, force) {
+  if (loaded[table] && !force) return db[table];
+  const data = await api({ action: 'list', table });
+  db[table] = data.records.map(normalize).sort((a, b) => (b.createdTime || '').localeCompare(a.createdTime || ''));
+  loaded[table] = true; setConn(true); return db[table];
+}
+async function loadAll(force) { try { await Promise.all(['Leads', 'Invoices', 'Products', 'Tasks'].map(t => load(t, force))); } catch (e) { setConn(false, e.message); throw e; } }
+async function createRec(table, payload) { const d = await api({ action: 'create', table, payload }); loaded[table] = false; return normalize(d.record); }
+async function updateRec(table, id, fields) { const d = await api({ action: 'update', table, payload: { id, ...fields } }); const i = db[table].findIndex(r => r.id === id); if (i > -1) db[table][i] = { ...db[table][i], ...fields }; return normalize(d.record); }
+function setConn(ok, msg) { online = ok; const el = document.getElementById('conn'); el.className = 'status' + (ok ? '' : ' off'); el.innerHTML = `<i></i><span>${ok ? 'מחובר ל-n8n' : 'לא מחובר' + (msg ? ' · ' + esc(msg) : '')}</span>`; }
+function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2600); }
+
+// ===== ניווט =====
+const views = {};
+function route() {
+  const v = (location.hash || '#dashboard').slice(1).split('?')[0];
+  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('active', a.dataset.v === v));
+  (views[v] || views.dashboard)();
+}
+window.addEventListener('hashchange', () => { closeDrawer(); route(); });
+function page(title, sub, actions, body) {
+  document.getElementById('main').innerHTML = `<div class="topbar"><div><h1>${title}</h1><div class="sub">${sub || ''}</div></div><div class="actions">${actions || ''}</div></div>${body}`;
+}
+const skeleton = n => `<div class="blueprint tablewrap"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>${Array.from({ length: n || 5 }, () => '<div class="skel" style="margin:14px 0"></div>').join('')}</div>`;
+const frame = inner => `<div class="blueprint tablewrap"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>${inner}</div>`;
+const panel = (h, inner) => `<section class="blueprint panel"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><h3>${h}</h3>${inner}</section>`;
+function statusSelect(table, id, cur, opts) { return `<select class="input" data-status="${table}:${id}">${opts.map(o => `<option value="${esc(o)}" ${o === cur ? 'selected' : ''}>${esc(LEAD_HE[o] || o)}</option>`).join('')}${opts.includes(cur) || !cur ? '' : `<option selected>${esc(cur)}</option>`}</select>`; }
+
+// ===== דשבורד =====
+views.dashboard = async () => {
+  page('דשבורד', 'מצב העסק עכשיו — מתוך Airtable דרך n8n', `<button class="btn btn-secondary" data-refresh>רענן</button><a class="btn btn-primary" href="#chat">שאל את הסוכן</a>`, `<div class="kpis">${skeleton(1)}${skeleton(1)}${skeleton(1)}${skeleton(1)}</div>`);
+  try { await loadAll(); } catch { document.getElementById('main').insertAdjacentHTML('beforeend', `<div class="empty">לא ניתן להתחבר ל-n8n. בדוק שה-workflow "10 - Webhook לאפליקציה" פעיל.</div>`); return; }
+  const now = new Date(), m = now.getMonth(), y = now.getFullYear();
+  const inv = db.Invoices.filter(i => !isErr(i.Status) && i.Status !== 'בוטלה');
+  const monthInv = inv.filter(i => { const d = new Date(i.createdTime || i.Created); return d.getMonth() === m && d.getFullYear() === y; });
+  const revenue = monthInv.reduce((s, i) => s + Number(i.Total || 0), 0);
+  const open = inv.filter(i => i.Status !== 'שולמה');
+  const openSum = open.reduce((s, i) => s + Number(i.Total || i.Amount || 0), 0);
+  const leads = db.Leads.filter(l => l.Status !== 'לקוח');
+  const newLeads = leads.filter(l => l.Status === 'New').length;
+  const tasksOpen = db.Tasks.filter(t => t.Status !== 'הושלם');
+  const byStatus = {}; db.Leads.forEach(l => { const s = l.Status || '—'; byStatus[s] = (byStatus[s] || 0) + 1; });
+  const maxB = Math.max(1, ...Object.values(byStatus));
+  const recent = [...db.Invoices].slice(0, 6);
+  const stock = db.Products.filter(p => !/^(checked|true|1|yes|כן)$/i.test(String(p.InStock || '').trim()));
+  const kpi = (l, v, d) => `<div class="blueprint kpi"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="l">${l}</div><div class="v num">${v}</div><div class="d">${d}</div></div>`;
+  page('דשבורד', `${now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })} · ${db.Products.length} מוצרים בקטלוג`, `<button class="btn btn-secondary" data-refresh>רענן</button><a class="btn btn-primary" href="#chat">שאל את הסוכן</a>`,
+    `<div class="kpis">
+      ${kpi('הכנסות החודש', `${ils(revenue)} <small>₪</small>`, `${monthInv.length} חשבוניות כולל מע"מ`)}
+      ${kpi('חשבוניות פתוחות', open.length, `${ils(openSum)} ₪ טרם שולמו`)}
+      ${kpi('לידים', leads.length, `${newLeads} חדשים ממתינים למייל`)}
+      ${kpi('משימות פתוחות', tasksOpen.length, `${db.Tasks.length - tasksOpen.length} הושלמו`)}
+    </div>
+    <div class="panels">
+      ${panel('לידים לפי סטטוס <a href="#leads">לכל הלידים</a>', `<div class="bars">${Object.entries(byStatus).sort((a, b) => b[1] - a[1]).map(([s, n]) => `<div class="bar"><span>${esc(LEAD_HE[s] || s)}</span><i style="width:${Math.round(n / maxB * 100)}%"></i><b class="num">${n}</b></div>`).join('') || '<div class="empty">אין לידים עדיין</div>'}</div>`)}
+      ${panel('חשבוניות אחרונות <a href="#invoices">לכל החשבוניות</a>', `<div class="list">${recent.map(i => `<div class="row"><span>#${esc(i.InvoiceNumber || '—')} · ${esc(customerName(i.CustomerId))}</span><span class="num">${ils(i.Total || i.Amount)} ₪ ${tagFor(i.Status)}</span></div>`).join('') || '<div class="empty">אין חשבוניות עדיין</div>'}</div>`)}
+      ${panel('משימות להיום <a href="#tasks">לכל המשימות</a>', `<div class="list">${tasksOpen.slice(0, 6).map(t => `<div class="row"><span title="${esc(t.Title)}">${esc(t.Title)}</span>${tagFor(t.Status)}</div>`).join('') || '<div class="empty">אין משימות פתוחות</div>'}</div>`)}
+      ${panel('מלאי <a href="#products">לקטלוג</a>', `<div class="list">${stock.length ? stock.slice(0, 6).map(p => `<div class="row"><span>${esc(p.Name)}</span><span class="tag tag-err">אזל</span></div>`).join('') : '<div class="empty">כל המוצרים במלאי</div>'}</div>`)}
+    </div>`);
+};
+
+// ===== לקוחות / לידים =====
+function peopleView(kind) {
+  return async () => {
+    const isCust = kind === 'customers';
+    page(isCust ? 'לקוחות' : 'לידים', isCust ? 'לידים שהפכו ללקוחות (סטטוס "לקוח") — נוצרים אוטומטית מהזמנה בחנות' : 'נקלטים מהטופס באתר (workflow 1) · מייל קר כל 3 שעות (2) · בדיקת תשובות כל 30 דק\' (6)',
+      `<button class="btn btn-primary" data-open="${isCust ? 'customer' : 'lead'}">${isCust ? 'לקוח חדש' : 'ליד חדש'}</button>`, skeleton());
+    try { await load('Leads'); } catch (e) { return fail(e); }
+    const rows = db.Leads.filter(l => isCust ? l.Status === 'לקוח' : l.Status !== 'לקוח');
+    const q = (new URLSearchParams(location.hash.split('?')[1] || '')).get('q') || '';
+    render();
+    function render() {
+      const term = (document.getElementById('q')?.value ?? q).trim().toLowerCase();
+      const list = rows.filter(r => !term || [r.Name, r.email, r.Company, r.Status].join(' ').toLowerCase().includes(term));
+      const body = list.length ? `<table class="table"><thead><tr><th>#</th><th>שם</th><th>אימייל</th><th>חברה</th><th>סטטוס</th><th>נוצר</th>${isCust ? '<th>הזמנות</th><th></th>' : ''}</tr></thead><tbody>${list.map(r => `<tr>
+        <td class="num muted">${esc(r.CustomerId ?? '')}</td><td><b>${esc(r.Name || '—')}</b></td><td dir="ltr" style="text-align:right">${esc(r.email || '')}</td><td>${esc(r.Company || '')}</td>
+        <td>${statusSelect('Leads', r.id, r.Status, STATUS.lead)}</td><td class="muted">${dt(r.createdTime)}</td>
+        ${isCust ? `<td class="num">${db.Invoices.filter(i => Number(i.CustomerId) === Number(r.CustomerId)).length || '0'}</td><td><button class="btn btn-secondary btn-sm" data-open="order" data-cust="${esc(r.CustomerId)}">הזמנה חדשה</button></td>` : ''}
+      </tr>`).join('')}</tbody></table>` : `<div class="empty">${isCust ? 'עדיין אין לקוחות. הזמנה בחנות יוצרת לקוח אוטומטית.' : 'אין לידים. הוסף ליד או חבר את טופס האתר ל-workflow 1.'}</div>`;
+      document.getElementById('main').querySelector('.content')?.remove();
+      document.getElementById('main').insertAdjacentHTML('beforeend', `<div class="content"><div class="toolbar"><input id="q" class="input" placeholder="חיפוש שם, אימייל, חברה…" value="${esc(document.getElementById('q')?.value ?? q)}"><span class="count">${list.length} מתוך ${rows.length}</span></div>${frame(body)}</div>`);
+      document.querySelector('.tablewrap + .skel, .main > .tablewrap')?.remove();
+      document.getElementById('q').addEventListener('input', render);
+    }
+  };
+}
+views.customers = peopleView('customers');
+views.leads = peopleView('leads');
+function fail(e) { document.getElementById('main').insertAdjacentHTML('beforeend', `<div class="empty">לא ניתן לטעון נתונים: ${esc(e.message)}</div>`); }
+
+// ===== הזמנות / חשבוניות =====
+function invoiceView(kind) {
+  return async () => {
+    const isOrders = kind === 'orders';
+    page(isOrders ? 'הזמנות' : 'חשבוניות', isOrders ? 'כל הזמנה היא רשומת חשבונית — שרשרת אוטומטית: אימות ומע"מ (5) → מסמך לדרייב (8) → מייל ללקוח (11)' : 'מע"מ 18% · מספור רץ · מסמך HTML בדרייב · הקישור בשדה PdfUrl',
+      `<button class="btn btn-primary" data-open="${isOrders ? 'order' : 'invoice'}">${isOrders ? 'הזמנה חדשה' : 'חשבונית ידנית'}</button><button class="btn btn-secondary" data-refresh>רענן</button>`, skeleton());
+    try { await Promise.all([load('Invoices'), load('Leads')]); } catch (e) { return fail(e); }
+    let filter = 'הכל';
+    render();
+    function render() {
+      const rows = db.Invoices.filter(i => filter === 'הכל' ? true : filter === 'פתוחות' ? (i.Status !== 'שולמה' && !isErr(i.Status) && i.Status !== 'בוטלה') : filter === 'שגיאות' ? isErr(i.Status) : i.Status === filter);
+      const sum = rows.reduce((s, i) => s + Number(i.Total || 0), 0);
+      const chips = ['הכל', 'פתוחות', 'שולמה', 'שגיאות'].map(c => `<button class="chip" aria-pressed="${c === filter}" data-f="${c}">${c}</button>`).join('');
+      const body = rows.length ? `<table class="table"><thead><tr><th>מס\'</th><th>לקוח</th><th class="num">לפני מע"מ</th><th class="num">מע"מ</th><th class="num">סה"כ</th><th>סטטוס</th><th>נוצר</th><th>מסמך</th><th></th></tr></thead><tbody>${rows.map(i => `<tr>
+        <td class="num"><b>${esc(i.InvoiceNumber ?? '—')}</b></td><td>${esc(customerName(i.CustomerId))}<div class="muted" dir="ltr" style="text-align:right">${esc(customerEmail(i.CustomerId))}</div></td>
+        <td class="num">${ils(i.Amount)} ₪</td><td class="num">${ils(i.VatAmount)} ₪</td><td class="num"><b>${ils(i.Total)} ₪</b></td>
+        <td>${isErr(i.Status) ? `<span class="tag tag-err" title="${esc(i.Status)}">שגיאה</span>` : statusSelect('Invoices', i.id, i.Status, STATUS.invoice)}</td>
+        <td class="muted">${dt(i.createdTime || i.Created)}</td>
+        <td>${i.PdfUrl ? `<a href="${esc(i.PdfUrl)}" target="_blank" rel="noopener">פתח ↗</a>` : '<span class="muted">בהפקה…</span>'}</td>
+        <td>${i.Status !== 'שולמה' && !isErr(i.Status) ? `<button class="btn btn-secondary btn-sm" data-paid="${i.id}">סמן כשולמה</button>` : ''}</td>
+      </tr>`).join('')}</tbody></table>` : `<div class="empty">אין חשבוניות בסינון הזה.</div>`;
+      document.getElementById('main').querySelector('.content')?.remove();
+      document.getElementById('main').insertAdjacentHTML('beforeend', `<div class="content"><div class="toolbar">${chips}<span class="count">${rows.length} רשומות · ${ils(sum)} ₪</span></div>${frame(body)}</div>`);
+      document.querySelector('.main > .tablewrap')?.remove();
+      document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; render(); });
+    }
+  };
+}
+views.orders = invoiceView('orders');
+views.invoices = invoiceView('invoices');
+
+// ===== מוצרים =====
+views.products = async () => {
+  page('מוצרים', 'הקטלוג שהחנות והסוכן משתמשים בו · אחרי שינוי — הרץ מחדש את workflow 4 כדי לעדכן את מאגר הידע', `<button class="btn btn-primary" data-open="product">מוצר חדש</button>`, skeleton());
+  try { await load('Products'); } catch (e) { return fail(e); }
+  let cat = 'הכל';
+  render();
+  function render() {
+    const cats = ['הכל', ...new Set(db.Products.map(p => p.Category).filter(Boolean))];
+    const term = (document.getElementById('q')?.value || '').trim().toLowerCase();
+    const rows = db.Products.filter(p => (cat === 'הכל' || p.Category === cat) && (!term || [p.Name, p.Description, p.Category].join(' ').toLowerCase().includes(term)));
+    const body = rows.length ? `<table class="table"><thead><tr><th>מוצר</th><th>קטגוריה</th><th class="num">מחיר</th><th>מלאי</th><th>תיאור</th></tr></thead><tbody>${rows.map(p => { const ok = /^(checked|true|1|yes|כן)$/i.test(String(p.InStock || '').trim()); return `<tr>
+      <td><b>${esc(p.Name)}</b></td><td>${esc(p.Category || '')}</td><td class="num">${ils(p.Price)} ₪</td>
+      <td><button class="tag ${ok ? 'tag-ok' : 'tag-err'}" style="border:0;cursor:pointer;font:inherit" data-stock="${p.id}" data-val="${ok ? '' : 'checked'}" title="לחץ להחלפה">${ok ? 'במלאי' : 'אזל'}</button></td>
+      <td class="muted trunc" title="${esc(p.Description || '')}">${esc(p.Description || '')}</td></tr>`; }).join('')}</tbody></table>` : '<div class="empty">אין מוצרים. הוסף מוצר או ייבא מ-data/products.csv.</div>';
+    document.getElementById('main').querySelector('.content')?.remove();
+    document.getElementById('main').insertAdjacentHTML('beforeend', `<div class="content"><div class="toolbar"><input id="q" class="input" placeholder="חיפוש מוצר, מק"ט…" value="${esc(term)}">${cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}<span class="count">${rows.length} מתוך ${db.Products.length}</span></div>${frame(body)}</div>`);
+    document.querySelector('.main > .tablewrap')?.remove();
+    document.getElementById('q').addEventListener('input', render);
+    document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { cat = b.dataset.c; render(); });
+  }
+};
+
+// ===== משימות =====
+views.tasks = async () => {
+  page('משימות', 'משימות נפתחות אוטומטית מהזמנות בחנות; אפשר להוסיף ידנית', `<button class="btn btn-primary" data-open="task">משימה חדשה</button>`, skeleton());
+  try { await load('Tasks'); } catch (e) { return fail(e); }
+  const cols = STATUS.task.map(s => { const rows = db.Tasks.filter(t => (t.Status || 'לביצוע') === s); return panel(`${s} <span class="num" style="font-family:var(--font-body);font-size:13px;color:var(--color-accent-700)">${rows.length}</span>`, `<div class="list">${rows.map(t => `<div class="row" style="display:grid;gap:6px"><span style="white-space:normal">${esc(t.Title)}</span>${statusSelect('Tasks', t.id, t.Status || 'לביצוע', STATUS.task)}</div>`).join('') || '<div class="empty" style="padding:16px">ריק</div>'}</div>`); }).join('');
+  document.querySelector('.main > .tablewrap')?.remove();
+  document.getElementById('main').insertAdjacentHTML('beforeend', `<div class="panels">${cols}</div>`);
+};
+
+// ===== צ'אט =====
+const chatLog = JSON.parse(sessionStorage.getItem('erp_chat') || '[]');
+const sessionId = sessionStorage.getItem('erp_sid') || (() => { const s = 'owner-' + Math.random().toString(36).slice(2, 8); sessionStorage.setItem('erp_sid', s); return s; })();
+views.chat = () => {
+  page('הסוכן החכם', 'שואל את Airtable (חשבוניות, לידים) ואת מאגר הידע (מדיניות, קטלוג) דרך workflow 10', `<button class="btn btn-secondary" id="clearChat">נקה שיחה</button>`,
+    `<div class="blueprint chat"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="msgs" id="msgs"></div>
+      <div class="suggest">${['מה ההכנסות החודש?', 'כמה חשבוניות עדיין לא שולמו?', 'אילו לידים חדשים יש?', 'מה מדיניות ההחזרות?', 'מה המחיר של מסך 27 אינץ\'?'].map(s => `<button data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+      <form class="compose" id="chatForm"><input class="input" id="chatIn" placeholder="שאל שאלה בעברית…" autocomplete="off"><button class="btn btn-primary" id="chatSend">שלח</button></form>
+    </div>`);
+  renderChat();
+  document.getElementById('chatIn').focus();
+  document.getElementById('clearChat').onclick = () => { chatLog.length = 0; sessionStorage.removeItem('erp_chat'); renderChat(); };
+};
+function renderChat() {
+  const el = document.getElementById('msgs'); if (!el) return;
+  el.innerHTML = chatLog.length ? chatLog.map(m => `<div class="msg ${m.role}${m.err ? ' err' : ''}">${esc(m.text)}<time>${m.t}</time></div>`).join('') : `<div class="empty">אין הודעות עדיין. נסה אחת מההצעות למטה.</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+async function sendChat(text) {
+  text = text.trim(); if (!text) return;
+  const t = () => new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+  chatLog.push({ role: 'me', text, t: t() }); renderChat();
+  const btn = document.getElementById('chatSend'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  document.getElementById('msgs').insertAdjacentHTML('beforeend', `<div class="msg ai" id="thinking"><span class="spin"></span> הסוכן חושב…</div>`);
+  try { const d = await api({ action: 'chat', message: text, sessionId }); chatLog.push({ role: 'ai', text: d.reply || '(אין תשובה)', t: t() }); }
+  catch (e) { chatLog.push({ role: 'ai', text: 'הסוכן לא זמין: ' + e.message, t: t(), err: true }); }
+  sessionStorage.setItem('erp_chat', JSON.stringify(chatLog.slice(-40)));
+  btn.disabled = false; btn.textContent = 'שלח'; renderChat();
+}
+
+// ===== מגירה: טפסים =====
+const forms = {
+  lead: { title: 'ליד חדש', fields: [['Name', 'שם מלא', 'text', true], ['email', 'אימייל', 'email', true], ['Company', 'חברה', 'text']], submit: async f => { await createRec('Leads', { Name: f.Name, email: f.email, Company: f.Company, Status: 'New' }); return 'הליד נוסף. מייל קר יישלח בריצה הבאה של workflow 2.'; } },
+  customer: { title: 'לקוח חדש', fields: [['Name', 'שם מלא', 'text', true], ['email', 'אימייל', 'email', true], ['Company', 'חברה', 'text']], submit: async f => { await createRec('Leads', { Name: f.Name, email: f.email, Company: f.Company, Status: 'לקוח' }); return 'הלקוח נוסף וקיבל מספר לקוח.'; } },
+  task: { title: 'משימה חדשה', fields: [['Title', 'כותרת', 'text', true]], submit: async f => { await createRec('Tasks', { Title: f.Title, Status: 'לביצוע' }); return 'המשימה נוספה.'; } },
+  product: { title: 'מוצר חדש', fields: [['Name', 'שם המוצר', 'text', true], ['Category', 'קטגוריה', 'text', true], ['Price', 'מחיר (₪)', 'number', true], ['Description', 'תיאור (מק"ט, מפרט, אחריות)', 'textarea']], submit: async f => { await createRec('Products', { Name: f.Name, Category: f.Category, Price: Number(f.Price), Description: f.Description, InStock: 'checked' }); return 'המוצר נוסף. הרץ את workflow 4 כדי שהסוכן יכיר אותו.'; } },
+  invoice: { title: 'חשבונית ידנית', fields: [['CustomerId', 'לקוח', 'customer', true], ['Amount', 'סכום לפני מע"מ (₪)', 'number', true]], submit: async f => { await createRec('Invoices', { CustomerId: Number(f.CustomerId), Amount: Number(f.Amount), Status: 'ממתין לאימות' }); return 'החשבונית נוצרה. workflow 5 יחשב מע"מ ומספר תוך דקה.'; } },
+};
+let drawerState = null;
+function openDrawer(kind, preset) {
+  const f = forms[kind]; drawerState = { kind, items: [{ pid: '', qty: 1 }] };
+  document.getElementById('dTitle').textContent = kind === 'order' ? 'הזמנה חדשה' : f.title;
+  const custOpts = () => `<option value="">בחר לקוח…</option>${db.Leads.filter(l => l.CustomerId).map(l => `<option value="${esc(l.CustomerId)}" ${String(l.CustomerId) === String(preset?.cust || '') ? 'selected' : ''}>${esc(l.Name)} · ${esc(l.email || '')}</option>`).join('')}`;
+  if (kind === 'order') {
+    document.getElementById('dBody').innerHTML = `<form id="dForm" novalidate>
+      <label class="field"><span>לקוח קיים</span><select class="input" name="CustomerId">${custOpts()}</select></label>
+      <div class="field"><span>או לקוח חדש</span><div style="display:grid;gap:6px"><input class="input" name="name" placeholder="שם מלא"><input class="input" name="email" type="email" placeholder="אימייל" dir="ltr"><input class="input" name="company" placeholder="חברה (לא חובה)"></div></div>
+      <div class="field"><span>פריטים</span><div class="items" id="items"></div><button type="button" class="btn btn-ghost btn-sm" id="addItem">+ פריט</button></div>
+      <div class="sumline"><span>לפני מע"מ</span><b class="num" id="sAmt">0 ₪</b></div><div class="sumline"><span>מע"מ 18%</span><b class="num" id="sVat">0 ₪</b></div><div class="sumline grand"><span>לתשלום</span><span class="num" id="sTot">0 ₪</span></div>
+      <div class="err" id="dErr" role="alert"></div></form>`;
+    renderItems();
+  } else {
+    document.getElementById('dBody').innerHTML = `<form id="dForm" novalidate>${f.fields.map(([n, l, t, req]) => `<label class="field"><span>${l}${req ? ' *' : ''}</span>${t === 'textarea' ? `<textarea class="input" name="${n}"></textarea>` : t === 'customer' ? `<select class="input" name="${n}">${custOpts()}</select>` : `<input class="input" name="${n}" type="${t}" ${t === 'email' ? 'dir="ltr"' : ''} ${t === 'number' ? 'min="0" step="0.01"' : ''}>`}</label>`).join('')}<div class="err" id="dErr" role="alert"></div></form>`;
+  }
+  document.getElementById('dFoot').innerHTML = `<button class="btn btn-primary" id="dSubmit" form="dForm" type="submit">${kind === 'order' ? 'צור הזמנה וחשבונית' : 'שמור'}</button><button class="btn btn-secondary" id="dCancel" type="button">ביטול</button>`;
+  document.getElementById('drawer').classList.add('open'); document.getElementById('backdrop').classList.add('open');
+  document.querySelector('#dForm input, #dForm select')?.focus();
+}
+function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('backdrop').classList.remove('open'); drawerState = null; }
+function renderItems() {
+  const prods = db.Products.filter(p => /^(checked|true|1|yes|כן)$/i.test(String(p.InStock || '').trim()));
+  document.getElementById('items').innerHTML = drawerState.items.map((it, i) => `<div class="it"><select class="input" data-i="${i}" data-k="pid"><option value="">בחר מוצר…</option>${prods.map(p => `<option value="${p.id}" ${p.id === it.pid ? 'selected' : ''}>${esc(p.Name)} · ${ils(p.Price)} ₪</option>`).join('')}</select><input class="input num" type="number" min="1" value="${it.qty}" data-i="${i}" data-k="qty"><button type="button" class="btn btn-ghost btn-sm" data-rm="${i}" aria-label="הסר">✕</button></div>`).join('');
+  const amt = orderAmount();
+  document.getElementById('sAmt').textContent = ils(amt) + ' ₪'; document.getElementById('sVat').textContent = ils(amt * 0.18) + ' ₪'; document.getElementById('sTot').textContent = ils(amt * 1.18) + ' ₪';
+}
+function orderAmount() { return drawerState.items.reduce((s, it) => { const p = db.Products.find(x => x.id === it.pid); return s + (p ? Number(p.Price) * Number(it.qty || 1) : 0); }, 0); }
+async function submitDrawer(form) {
+  const err = document.getElementById('dErr'), btn = document.getElementById('dSubmit');
+  const f = Object.fromEntries(new FormData(form).entries());
+  try {
+    let msg;
+    if (drawerState.kind === 'order') {
+      const items = drawerState.items.map(it => { const p = db.Products.find(x => x.id === it.pid); return p ? { name: p.Name, qty: Number(it.qty || 1), price: Number(p.Price) } : null; }).filter(Boolean);
+      if (!items.length) throw new Error('בחר לפחות פריט אחד.');
+      let cust = db.Leads.find(l => String(l.CustomerId) === String(f.CustomerId));
+      const name = cust ? cust.Name : f.name.trim(), email = cust ? cust.email : f.email.trim();
+      if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '')) throw new Error('בחר לקוח קיים או מלא שם ואימייל תקינים ללקוח חדש.');
+      btn.disabled = true; btn.innerHTML = '<span class="spin"></span> שולח…';
+      const d = await api({ action: 'order', payload: { name, email, company: cust ? cust.Company || '' : f.company, amount: orderAmount(), items } });
+      loaded.Invoices = loaded.Leads = loaded.Tasks = false;
+      msg = `ההזמנה נוצרה (לקוח #${d.customerId}). החשבונית תחושב, תופק ותישלח במייל תוך כ-2–3 דקות.`;
+    } else {
+      for (const [n, l, t, req] of forms[drawerState.kind].fields) { if (req && !String(f[n] || '').trim()) throw new Error(`חסר: ${l}`); if (t === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f[n])) throw new Error('האימייל לא תקין.'); }
+      btn.disabled = true; btn.innerHTML = '<span class="spin"></span> שומר…';
+      msg = await forms[drawerState.kind].submit(f);
+    }
+    closeDrawer(); toast(msg); route();
+  } catch (e) { err.textContent = e.message; btn.disabled = false; btn.textContent = drawerState?.kind === 'order' ? 'צור הזמנה וחשבונית' : 'שמור'; }
+}
+
+// ===== אירועים =====
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-open],[data-refresh],[data-paid],[data-stock],[data-s],[data-rm],#addItem,#dClose,#dCancel,#backdrop');
+  if (!t) return;
+  if (t.dataset.open) { try { await Promise.all([load('Leads'), load('Products')]); } catch {} openDrawer(t.dataset.open, { cust: t.dataset.cust }); }
+  else if (t.hasAttribute('data-refresh')) { try { await loadAll(true); toast('הנתונים עודכנו'); route(); } catch (err) { toast('רענון נכשל: ' + err.message); } }
+  else if (t.dataset.paid) { t.disabled = true; try { await updateRec('Invoices', t.dataset.paid, { Status: 'שולמה' }); toast('החשבונית סומנה כשולמה'); route(); } catch (err) { toast(err.message); t.disabled = false; } }
+  else if (t.dataset.stock) { try { await updateRec('Products', t.dataset.stock, { InStock: t.dataset.val }); toast('המלאי עודכן'); route(); } catch (err) { toast(err.message); } }
+  else if (t.dataset.s) { document.getElementById('chatIn').value = t.dataset.s; sendChat(t.dataset.s); }
+  else if (t.dataset.rm !== undefined) { drawerState.items.splice(Number(t.dataset.rm), 1); if (!drawerState.items.length) drawerState.items.push({ pid: '', qty: 1 }); renderItems(); }
+  else if (t.id === 'addItem') { drawerState.items.push({ pid: '', qty: 1 }); renderItems(); }
+  else closeDrawer();
+});
+document.addEventListener('change', async e => {
+  const s = e.target.closest('[data-status]'); if (s) { const [table, id] = s.dataset.status.split(':'); s.disabled = true; try { await updateRec(table, id, { Status: s.value }); toast('הסטטוס עודכן'); } catch (err) { toast('העדכון נכשל: ' + err.message); } s.disabled = false; return; }
+  const it = e.target.closest('[data-k]'); if (it && drawerState) { drawerState.items[Number(it.dataset.i)][it.dataset.k] = it.value; renderItems(); }
+});
+document.addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'dForm') submitDrawer(e.target); if (e.target.id === 'chatForm') { const i = document.getElementById('chatIn'); sendChat(i.value); i.value = ''; } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+route();
+</script>
+</body>
+</html>

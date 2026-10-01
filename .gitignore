@@ -1,0 +1,12 @@
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+~$*
+node_modules/
+ERP_final_project/
+*token*.txt
+*api key*.txt
+telegram bots.txt
+*(1).json
