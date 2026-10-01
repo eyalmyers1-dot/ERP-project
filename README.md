@@ -1,12 +1,23 @@
-<div dir="rtl">
+<div dir="rtl" align="right">
 
 # ERP-AI — מערכת ניהול עסק חכמה
 
 פרויקט גמר · **אלקטרו-פלוס בע"מ** (AI Electronics) — עסק אלקטרוניקה ישראלי דמיוני.
-מערכת ERP קטנה שבה סוכני AI ואוטומציות עושים את העבודה: קולטים לידים, שולחים מיילים, מפיקים חשבוניות, עונים ללקוחות ומנתחים את העסק.
+מערכת ERP קטנה שבה סוכני AI ואוטומציות עושות את העבודה: קולטות לידים, שולחות מיילים, מפיקות חשבוניות, עונות ללקוחות ומנתחות את העסק.
 בנויה לפי המסמך המנחה [`docs/פרויקט-גמר-53500.docx`](docs/פרויקט-גמר-53500.docx) — **אפס קוד ב-n8n**, 11 workflows, 3 סוכני AI, RAG, ומסלול הזמנה מלא מהחנות ועד מייל עם חשבונית.
 
-> **הדגמה חיה:** [החנות ללקוחות](app/store/index.html) · [אפליקציית הניהול](app/admin/index.html) — שתיהן קוראות וכותבות ל-Airtable דרך webhook אחד ב-n8n Cloud.
+## 🔗 כניסה למערכת (חי)
+
+| | קישור | מה רואים |
+|---|---|---|
+| 🛒 **החנות ללקוחות** | **https://eyalmyers1-dot.github.io/ERP-project/app/store/index.html** | קטלוג חי מ-Airtable, עגלה, הזמנה → חשבונית במייל, כפתור "סוכן חכם" |
+| 🧭 **עמדת הניהול** | **https://eyalmyers1-dot.github.io/ERP-project/app/admin/index.html** | דשבורד, לקוחות, לידים, הזמנות, חשבוניות, מוצרים, משימות, צ'אט עם הסוכן |
+| 🏠 דף הכניסה | https://eyalmyers1-dot.github.io/ERP-project/ | בחירה בין החנות לניהול |
+| 🤖 בוט המכירות (טלגרם) | https://t.me/erp_finalproject_sales_JB_bot | סוכן שירות לקוחות — עונה מתוך המדיניות והקטלוג |
+
+> **איך בודקים את המסלול המלא בדקה:** פותחים את החנות → מוסיפים מוצר לעגלה → "לתשלום" → שם + אימייל → "שלח הזמנה". תוך כ-3 דקות מגיע מייל עם חשבונית מס (מסמך Google), והחשבונית מופיעה בעמדת הניהול ובדשבורד.
+
+![חנות](docs/images/store-hero.png)
 
 ---
 
@@ -14,7 +25,7 @@
 
 | שכבה | במה מיושמת | תפקיד |
 |---|---|---|
-| **נתונים** | Airtable (בסיס `ERP-AI`) | 4 טבלאות בשימוש מתוך מודל של 14 — מקור האמת |
+| **נתונים** | Airtable (בסיס `ERP-AI`) | 4 טבלאות — מקור האמת |
 | **לוגיקה ואוטומציה** | n8n Cloud | 11 workflows + 3 סוכני AI + מאגר וקטורי (RAG) |
 | **ממשק** | אפליקציית ווב (עוצבה ב-Claude Design, מערכת העיצוב "Industry") | חנות ללקוחות + ניהול לבעל העסק + צ'אט עם הסוכן |
 
@@ -22,7 +33,7 @@
 לקוח ──► חנות (app/store) ──► webhook ──┐
                                         │        ┌──► Airtable  (Leads · Invoices · Products · Tasks)
 בעל העסק ──► ניהול (app/admin) ──► webhook ──┤  n8n   ├──► Gmail     (מיילים קרים · חשבונית ללקוח)
-                                        │ Cloud  ├──► Drive     (מסמכי חשבונית HTML)
+                                        │ Cloud  ├──► Drive     (מסמכי חשבונית — Google Docs)
 בוט טלגרם #1 (מנהל) ────────────────────┤  + AI  └──► Telegram  (תשובות הסוכנים)
 בוט טלגרם #2 (לקוחות) ──────────────────┘
                  ▲ OpenAI: מודל צ'אט + embeddings (רב-לשוני, עברית)
@@ -39,10 +50,8 @@
 5. **Workflow 11** — שולח ללקוח מייל עם הקישור → *נשלחה ללקוח*.
 6. בעל העסק מסמן *שולמה* באפליקציה.
 
-בבדיקה האחרונה: הזמנה בחנות → מייל עם חשבונית #1001 אצל הלקוח תוך **44 שניות**.
-
-![חנות](docs/images/store-hero.png)
-![קטלוג והזמנה](docs/images/store-checkout.png)
+![קטלוג](docs/images/store-catalog.png)
+![הזמנה](docs/images/store-checkout.png)
 ![מסמך חשבונית](docs/images/invoice-document.png)
 
 ---
@@ -51,23 +60,69 @@
 
 הייצוא המלא של כל אחד ב-[`workflows/`](workflows/). המספור 1–11 הוא של הפרויקט; בסוגריים המספר במסמך המנחה.
 
-| # | Workflow | טריגר | מה עושה |
-|---|---|---|---|
-| 1 | [Leads → Airtable](workflows/01-leads-to-airtable.json) (WF2) | Webhook מטופס האתר | סינון כפילויות לפי אימייל, יצירת ליד בסטטוס `New`; ליד פגום → מייל לבעלים |
-| 2 | [Sales Cold Emails](workflows/02-sales-cold-emails.json) (WF3) | כל 3 שעות | סוכן מכירות: מנסח מייל קר בעברית ל-ליד `New`, שולח ב-Gmail, מסמן `Contacted` |
-| 3 | [Policies Embedding](workflows/03-policies-embedding.json) (WF6) | ידני — טופס העלאה | מטמיע את מסמכי המדיניות (`policies/`) במאגר וקטורי `mypolicies` |
-| 4 | [Products Embedding](workflows/04-products-embedding.json) (WF7) | ידני — טופס העלאה | מטמיע את קטלוג המוצרים (`data/products.csv`) במאגר `theproducts` |
-| 5 | [אימות חשבונית ומע"מ](workflows/05-invoice-validation-vat.json) (WF1) | חשבונית חדשה ב-Airtable | אימות, מע"מ 18%, סה"כ, מספור רץ → *ממתין להפקה* |
-| 6 | [בדיקת תשובות](workflows/06-sales-reply-check.json) (WF4) | כל 30 דק' | סורק Gmail; ליד שהשיב → סטטוס `הגיב` |
-| 7 | [סוכן שירות לקוחות](workflows/07-customer-service-agent.json) (WF5) | בוט טלגרם #2 (@erp_finalproject_sales_JB_bot) | סוכן RAG: עונה מתוך המדיניות והקטלוג + טבלת Products החיה; כפתור "סוכן חכם" בחנות מוביל אליו |
-| 8 | [מסמך חשבונית → Drive](workflows/08-invoice-document-to-drive.json) (WF8) | כל דקה | HTML RTL → Google Doc בדרייב → `PdfUrl` → *הופק* |
-| 9 | [סוכן המנהל](workflows/09-manager-agent.json) (WF9) | בוט טלגרם #1, בעלים בלבד | Summarize מחשב הכנסות/פתוחות, הסוכן רק מנסח |
-| 10 | [Webhook לאפליקציה](workflows/10-app-webhook.json) (WF13) | Webhook | `list / create / update / order / chat` — צינור אחד לשתי האפליקציות |
-| 11 | [חשבונית → מייל ללקוח](workflows/11-invoice-email-to-customer.json) | כל דקה | חשבונית *הופק* → מייל ללקוח עם קישור → *נשלחה ללקוח* |
+### 1 · Leads → Airtable (WF2 במפרט)
+Webhook מטופס "הצעת מחיר" באתר → חיפוש כפילות לפי אימייל → ליד חדש בסטטוס `New`; ליד פגום → מייל לבעלים. [`workflows/01-leads-to-airtable.json`](workflows/01-leads-to-airtable.json)
+
+![Workflow 1](docs/images/workflow-01.png)
+
+### 2 · Sales Cold Emails (WF3 במפרט)
+כל 3 שעות: סוכן המכירות מנסח מייל קר בעברית לכל ליד `New`, שולח ב-Gmail ומסמן `Contacted`. [`workflows/02-sales-cold-emails.json`](workflows/02-sales-cold-emails.json)
+
+![Workflow 2](docs/images/workflow-02.png)
+
+### 3 · Policies Embedding (WF6 במפרט)
+טופס העלאה → 12 מסמכי המדיניות (`policies/`) מוטמעים במאגר הווקטורי `mypolicies` (Simple Vector Store + OpenAI Embeddings). [`workflows/03-policies-embedding.json`](workflows/03-policies-embedding.json)
+
+![Workflow 3](docs/images/workflow-03.png)
+
+### 4 · Products Embedding (WF7 במפרט)
+טופס העלאה → קטלוג המוצרים (`data/products.csv`) מפוצל ומוטמע במאגר `theproducts`. [`workflows/04-products-embedding.json`](workflows/04-products-embedding.json)
+
+![Workflow 4](docs/images/workflow-04.png)
+
+### 5 · אימות חשבונית ומע"מ (WF1 במפרט)
+טריגר על חשבונית חדשה ב-Airtable → בדיקת סכום ולקוח → מע"מ 18%, סה"כ, מספור רץ מ-1001 → *ממתין להפקה*; חשבונית פגומה מסומנת בשגיאה. [`workflows/05-invoice-validation-vat.json`](workflows/05-invoice-validation-vat.json)
+
+![Workflow 5](docs/images/workflow-05.png)
+
+### 6 · סוכן מכירות — בדיקת תשובות (WF4 במפרט)
+כל 30 דקות סורק מיילים חדשים ב-Gmail; ליד שהשיב → סטטוס `הגיב`, המייל מסומן כנקרא. [`workflows/06-sales-reply-check.json`](workflows/06-sales-reply-check.json)
+
+![Workflow 6](docs/images/workflow-06.png)
+
+### 7 · סוכן שירות לקוחות — טלגרם (WF5 במפרט)
+בוט טלגרם #2 → AI Agent עם 3 כלים: `business_policy` (RAG מדיניות), `product_catalog` (RAG קטלוג) ו-`products_table` (טבלת Products החיה ב-Airtable). עונה בעברית, לא ממציא. כפתור "סוכן חכם" בחנות מוביל אליו. [`workflows/07-customer-service-agent.json`](workflows/07-customer-service-agent.json)
+
+![Workflow 7](docs/images/workflow-07.png)
+
+### 8 · הפקת מסמך חשבונית → Google Drive (WF8 במפרט)
+כל דקה: חשבוניות *ממתין להפקה* → תבנית HTML RTL → העלאה ל-Drive API כמסמך Google (HTML מיובא ומעוצב) → שיתוף לצפייה → `PdfUrl` + *הופק*. [`workflows/08-invoice-document-to-drive.json`](workflows/08-invoice-document-to-drive.json)
+
+![Workflow 8](docs/images/workflow-08.png)
+
+### 9 · סוכן המנהל — טלגרם (WF9 במפרט)
+בוט טלגרם #1, מסונן ל-Chat ID של הבעלים → Summarize מחשב הכנסות, מע"מ וחשבוניות פתוחות מטבלת Invoices → הסוכן רק מנסח תשובה בעברית. [`workflows/09-manager-agent.json`](workflows/09-manager-agent.json)
+
+![Workflow 9](docs/images/workflow-09.png)
+
+### 10 · Webhook לאפליקציה (WF13 במפרט)
+צינור אחד לשתי האפליקציות: `list / create / update / order / chat`. פעולת `order` מריצה upsert לקוח → חשבונית → משימה; פעולת `chat` מפעילה את סוכן האפליקציה עם כלים של Airtable ו-RAG. [`workflows/10-app-webhook.json`](workflows/10-app-webhook.json)
+
+![Workflow 10](docs/images/workflow-10.png)
+
+### 11 · חשבונית מוכנה → מייל ללקוח
+כל דקה: חשבוניות *הופק* → איתור הלקוח לפי `CustomerId` → מייל HTML עם קישור לחשבונית → *נשלחה ללקוח*. [`workflows/11-invoice-email-to-customer.json`](workflows/11-invoice-email-to-customer.json)
+
+![Workflow 11](docs/images/workflow-11.png)
 
 **שלושת הסוכנים:** מנהל (9), שירות לקוחות (7), מכירות (2 + 6). הסוכן באפליקציית הניהול (10) משלב כלים של Airtable ו-RAG.
 
+---
+
+## עמדת הניהול
+
 ![דשבורד](docs/images/admin-dashboard.png)
+![לידים](docs/images/admin-leads.png)
 ![חשבוניות](docs/images/admin-invoices.png)
 ![הסוכן החכם](docs/images/admin-chat.png)
 
@@ -111,7 +166,8 @@
 ## מבנה הריפו
 
 ```
-app/store/        החנות ללקוחות — קטלוג חי, עגלה, checkout, טופס ליד (HTML/CSS/JS, בלי build)
+index.html        דף כניסה (GitHub Pages) — קישורים לחנות ולניהול
+app/store/        החנות ללקוחות — קטלוג חי, עגלה, checkout, טופס ליד, כפתור "סוכן חכם" (HTML/CSS/JS, בלי build)
 app/admin/        אפליקציית הניהול — דשבורד, לקוחות, לידים, הזמנות, חשבוניות, מוצרים, משימות, צ'אט
 workflows/        ייצוא JSON של 11 ה-workflows (ללא סודות — credentials לפי שם בלבד)
 policies/         12 מסמכי המדיניות בעברית שמוטמעים ב-RAG (workflow 3)
@@ -130,14 +186,14 @@ docs/             המסמך המנחה, סכמה, מדריך הקמה, צילו
 3. **n8n:** ייבא את 11 הקבצים מ-`workflows/`, בחר credentials ובסיס/טבלה בכל צומת Airtable.
 4. **RAG:** הרץ את 3 (העלה את `policies/*.md`) ואת 4 (העלה את `data/products.csv`). המאגר בזיכרון — אחרי כל הפעלה מחדש של n8n להריץ שוב.
 5. **Workflow 9:** הזן את ה-Chat ID של הבעלים בצומת "זה הבעלים?".
-6. **הפעל** את 1, 2, 5, 6, 7, 8, 9, 10, 11.
-7. **אפליקציות:** ב-`app/store/index.html` ו-`app/admin/index.html` עדכן את `WEBHOOK_URL` (ו-`LEADS_WEBHOOK_URL`) לכתובות ה-Production שלך, ופרסם ב-Netlify או פתח מקומית.
+6. **פרסם** את 1, 2, 5, 6, 7, 8, 9, 10, 11.
+7. **אפליקציות:** ב-`app/store/index.html` ו-`app/admin/index.html` עדכן את `WEBHOOK_URL` (ו-`LEADS_WEBHOOK_URL`) לכתובות ה-Production שלך, והפעל GitHub Pages על ענף `main`.
 
 ---
 
 ## מגבלות מוכרות (בכוונה, לפי המסמך)
 
-- המאגר הווקטורי בזיכרון של n8n — נמחק בהפעלה מחדש; מריצים שוב 3 + 4.
+- המאגר הווקטורי בזיכרון של n8n — נמחק בהפעלה מחדש; מריצים שוב 3 + 4. סוכן הלקוחות ממשיך לענות על מוצרים מטבלת Products גם כשהמאגר ריק.
 - החשבונית נשמרת בדרייב כמסמך Google (HTML מיובא ומעוצב); PDF בלחיצה אחת — קובץ → הורדה → PDF.
 - מספור חשבוניות רץ עלול להתנגש אם שתי חשבוניות נוצרות באותה דקה.
 - אין טיפול בשגיאות או ניסיונות חוזרים — כשלון נראה אדום ב-Executions.
