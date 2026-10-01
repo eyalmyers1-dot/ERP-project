@@ -59,7 +59,7 @@
 | 4 | [Products Embedding](workflows/04-products-embedding.json) (WF7) | ידני — טופס העלאה | מטמיע את קטלוג המוצרים (`data/products.csv`) במאגר `theproducts` |
 | 5 | [אימות חשבונית ומע"מ](workflows/05-invoice-validation-vat.json) (WF1) | חשבונית חדשה ב-Airtable | אימות, מע"מ 18%, סה"כ, מספור רץ → *ממתין להפקה* |
 | 6 | [בדיקת תשובות](workflows/06-sales-reply-check.json) (WF4) | כל 30 דק' | סורק Gmail; ליד שהשיב → סטטוס `הגיב` |
-| 7 | [סוכן שירות לקוחות](workflows/07-customer-service-agent.json) (WF5) | בוט טלגרם #2 | סוכן RAG: עונה רק מתוך המדיניות והקטלוג, לא ממציא |
+| 7 | [סוכן שירות לקוחות](workflows/07-customer-service-agent.json) (WF5) | בוט טלגרם #2 (@erp_finalproject_sales_JB_bot) | סוכן RAG: עונה מתוך המדיניות והקטלוג + טבלת Products החיה; כפתור "סוכן חכם" בחנות מוביל אליו |
 | 8 | [מסמך חשבונית → Drive](workflows/08-invoice-document-to-drive.json) (WF8) | כל דקה | HTML RTL → Google Doc בדרייב → `PdfUrl` → *הופק* |
 | 9 | [סוכן המנהל](workflows/09-manager-agent.json) (WF9) | בוט טלגרם #1, בעלים בלבד | Summarize מחשב הכנסות/פתוחות, הסוכן רק מנסח |
 | 10 | [Webhook לאפליקציה](workflows/10-app-webhook.json) (WF13) | Webhook | `list / create / update / order / chat` — צינור אחד לשתי האפליקציות |
