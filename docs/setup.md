@@ -11,7 +11,7 @@ n8n Cloud · Airtable · OpenAI · שני בוטי טלגרם מ-@BotFather (מ�
 | Airtable Personal Access Token | Airtable Personal Access Token | 1, 2, 5, 6, 8, 9, 10, 11 |
 | OpenAI account | OpenAI API | 2, 3, 4, 7, 9, 10 |
 | Gmail OAuth2 | Gmail OAuth2 | 1, 2, 6, 11 |
-| Google Drive OAuth2 | Google Drive OAuth2 | 8 |
+| Google Drive OAuth2 | Google Drive OAuth2 — ב-credential הגדר **Allowed HTTP Request Domains = All** (workflow 8 מעלה ל-Drive API דרך HTTP Request כדי שהחשבונית תישמר כמסמך Google מעוצב) | 8 |
 | Telegram — בוט המנהל | Telegram API | 9 |
 | Telegram — בוט הלקוחות | Telegram API | 7 |
 

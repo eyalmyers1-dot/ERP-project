@@ -14,7 +14,7 @@
     -220
    ],
    "parameters": {
-    "content": "## 8 · הפקת מסמך חשבונית → Google Drive (WF8 במפרט)\n**מה:** כל דקה מושך חשבוניות בסטטוס \"ממתין להפקה\" בלי PdfUrl, ממלא תבנית HTML בעברית (RTL), מעלה לדרייב, משתף לצפייה, וכותב את הקישור ב-PdfUrl + סטטוס \"הופק\".\n**צריך:** credentials של Google Drive ו-Airtable.\n**תבנית החשבונית:** בצומת \"בניית HTML\" — ערוך שם את פרטי העסק (ח.פ., כתובת).\n**PDF:** לפי המפרט אין המרה אוטומטית — פותחים בדרייב ומורידים כ-PDF.",
+    "content": "## 8 · הפקת מסמך חשבונית → Google Drive (WF8 במפרט)\n**מה:** כל דקה מושך חשבוניות בסטטוס \"ממתין להפקה\" בלי PdfUrl, ממלא תבנית HTML בעברית (RTL), מעלה לדרייב **כ-Google Doc** (ייבוא HTML → מסמך מעוצב), משתף לצפייה, וכותב את הקישור ב-PdfUrl + סטטוס \"הופק\".\n**צריך:** credentials של Google Drive ו-Airtable. ב-credential של Google Drive: Allowed HTTP Request Domains = All (או www.googleapis.com).\n**תבנית החשבונית:** בצומת \"בניית HTML\" — ערוך שם את פרטי העסק (ח.פ., כתובת).\n**העלאה:** צומת HTTP Request ל-Drive API (multipart) — כך ה-HTML מומר למסמך Google ולא נשמר כטקסט גולמי.\n**PDF:** הלקוח פותח את המסמך ומוריד כ-PDF (קובץ → הורדה → PDF).",
     "color": 4
    }
   },
@@ -102,35 +102,29 @@
   {
    "id": "u8",
    "name": "העלאה לדרייב",
-   "type": "n8n-nodes-base.googleDrive",
-   "typeVersion": 3,
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
    "position": [
-    896,
+    672,
     0
    ],
    "parameters": {
-    "operation": "createFromText",
-    "content": "={{ $json.html }}",
-    "name": "=חשבונית-{{ $('שיטוח שדות').item.json.InvoiceNumber }}.html",
-    "driveId": {
-     "__rl": true,
-     "mode": "list",
-     "value": "My Drive"
-    },
-    "folderId": {
-     "__rl": true,
-     "mode": "list",
-     "value": "root",
-     "cachedResultName": "/ (Root folder)"
-    },
+    "method": "POST",
+    "url": "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,webViewLink",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "googleDriveOAuth2Api",
+    "sendBody": true,
+    "contentType": "raw",
+    "rawContentType": "multipart/related; boundary=erpboundary",
+    "body": "={{ '--erpboundary\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n' + JSON.stringify({ name: 'חשבונית-' + $('שיטוח שדות').item.json.InvoiceNumber, mimeType: 'application/vnd.google-apps.document' }) + '\\r\\n--erpboundary\\r\\nContent-Type: text/html; charset=UTF-8\\r\\n\\r\\n' + $json.html + '\\r\\n--erpboundary--' }}",
     "options": {}
    },
    "credentials": {
     "googleDriveOAuth2Api": {
-     "id": "zokfvjQDWfQNJt7t",
      "name": "Google Drive OAuth2 API"
     }
-   }
+   },
+   "notes": "מעלה את ה-HTML ל-Drive כ-Google Doc (ייבוא HTML → מסמך מעוצב, ניתן להורדה כ-PDF)."
   },
   {
    "id": "sh8",
@@ -184,7 +178,7 @@
       {
        "id": "url",
        "name": "PdfUrl",
-       "value": "=https://drive.google.com/file/d/{{ $('העלאה לדרייב').item.json.id }}/view",
+       "value": "={{ $('העלאה לדרייב').item.json.webViewLink }}",
        "type": "string"
       },
       {

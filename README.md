@@ -35,7 +35,7 @@
 1. לקוח מוסיף מוצרים לעגלה בחנות ומשאיר שם ואימייל.
 2. **Workflow 10** — upsert של הלקוח ב-`Leads` (מקבל `CustomerId` אוטומטי) → חשבונית ב-`Invoices` בסטטוס *ממתין לאימות* → משימת "הזמנה חדשה" ב-`Tasks`.
 3. **Workflow 5** — מאמת סכום ולקוח, מחשב מע"מ 18%, נותן מספר רץ → *ממתין להפקה*.
-4. **Workflow 8** — ממלא תבנית חשבונית HTML בעברית, מעלה ל-Google Drive, כותב קישור ב-`PdfUrl` → *הופק*.
+4. **Workflow 8** — ממלא תבנית חשבונית HTML בעברית, מעלה ל-Google Drive כמסמך Google מעוצב, כותב קישור ב-`PdfUrl` → *הופק*.
 5. **Workflow 11** — שולח ללקוח מייל עם הקישור → *נשלחה ללקוח*.
 6. בעל העסק מסמן *שולמה* באפליקציה.
 
@@ -60,7 +60,7 @@
 | 5 | [אימות חשבונית ומע"מ](workflows/05-invoice-validation-vat.json) (WF1) | חשבונית חדשה ב-Airtable | אימות, מע"מ 18%, סה"כ, מספור רץ → *ממתין להפקה* |
 | 6 | [בדיקת תשובות](workflows/06-sales-reply-check.json) (WF4) | כל 30 דק' | סורק Gmail; ליד שהשיב → סטטוס `הגיב` |
 | 7 | [סוכן שירות לקוחות](workflows/07-customer-service-agent.json) (WF5) | בוט טלגרם #2 | סוכן RAG: עונה רק מתוך המדיניות והקטלוג, לא ממציא |
-| 8 | [מסמך חשבונית → Drive](workflows/08-invoice-document-to-drive.json) (WF8) | כל דקה | HTML RTL → Google Drive → `PdfUrl` → *הופק* |
+| 8 | [מסמך חשבונית → Drive](workflows/08-invoice-document-to-drive.json) (WF8) | כל דקה | HTML RTL → Google Doc בדרייב → `PdfUrl` → *הופק* |
 | 9 | [סוכן המנהל](workflows/09-manager-agent.json) (WF9) | בוט טלגרם #1, בעלים בלבד | Summarize מחשב הכנסות/פתוחות, הסוכן רק מנסח |
 | 10 | [Webhook לאפליקציה](workflows/10-app-webhook.json) (WF13) | Webhook | `list / create / update / order / chat` — צינור אחד לשתי האפליקציות |
 | 11 | [חשבונית → מייל ללקוח](workflows/11-invoice-email-to-customer.json) | כל דקה | חשבונית *הופק* → מייל ללקוח עם קישור → *נשלחה ללקוח* |
@@ -125,7 +125,7 @@ docs/             המסמך המנחה, סכמה, מדריך הקמה, צילו
 
 המדריך המלא ב-[`docs/setup.md`](docs/setup.md). בקצרה:
 
-1. **חשבונות:** n8n Cloud, Airtable (PAT), OpenAI, שני בוטי טלגרם (BotFather), Google OAuth ל-Gmail ול-Drive.
+1. **חשבונות:** n8n Cloud, Airtable (PAT), OpenAI, שני בוטי טלגרם (BotFather), Google OAuth ל-Gmail ול-Drive (ב-credential של Drive: Allowed HTTP Request Domains = All).
 2. **Airtable:** צור בסיס עם 4 הטבלאות מ-`docs/schema.md`; ייבא את `data/products.csv` ל-Products.
 3. **n8n:** ייבא את 11 הקבצים מ-`workflows/`, בחר credentials ובסיס/טבלה בכל צומת Airtable.
 4. **RAG:** הרץ את 3 (העלה את `policies/*.md`) ואת 4 (העלה את `data/products.csv`). המאגר בזיכרון — אחרי כל הפעלה מחדש של n8n להריץ שוב.
@@ -138,7 +138,7 @@ docs/             המסמך המנחה, סכמה, מדריך הקמה, צילו
 ## מגבלות מוכרות (בכוונה, לפי המסמך)
 
 - המאגר הווקטורי בזיכרון של n8n — נמחק בהפעלה מחדש; מריצים שוב 3 + 4.
-- אין המרה ל-PDF — החשבונית נשמרת כ-HTML בדרייב; PDF בלחיצה אחת מ-Google Docs.
+- החשבונית נשמרת בדרייב כמסמך Google (HTML מיובא ומעוצב); PDF בלחיצה אחת — קובץ → הורדה → PDF.
 - מספור חשבוניות רץ עלול להתנגש אם שתי חשבוניות נוצרות באותה דקה.
 - אין טיפול בשגיאות או ניסיונות חוזרים — כשלון נראה אדום ב-Executions.
 - סוכן המנהל רואה עד 100 חשבוניות ולא יוצר משימות.
