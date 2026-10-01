@@ -188,11 +188,13 @@ async function api(body) {
   return data;
 }
 const normalize = r => r.fields ? { id: r.id, createdTime: r.createdTime, ...r.fields } : r;
+const loadedAt = {};
+const FRESH_MS = 20000; // נתונים נטענים מחדש מ-Airtable אם עברו 20 שניות מהטעינה הקודמת
 async function load(table, force) {
-  if (loaded[table] && !force) return db[table];
+  if (loaded[table] && !force && Date.now() - (loadedAt[table] || 0) < FRESH_MS) return db[table];
   const data = await api({ action: 'list', table });
   db[table] = data.records.map(normalize).sort((a, b) => (b.createdTime || '').localeCompare(a.createdTime || ''));
-  loaded[table] = true; setConn(true); return db[table];
+  loaded[table] = true; loadedAt[table] = Date.now(); setConn(true); return db[table];
 }
 async function loadAll(force) { try { await Promise.all(['Leads', 'Invoices', 'Products', 'Tasks'].map(t => load(t, force))); } catch (e) { setConn(false, e.message); throw e; } }
 async function createRec(table, payload) { const d = await api({ action: 'create', table, payload }); loaded[table] = false; return normalize(d.record); }
